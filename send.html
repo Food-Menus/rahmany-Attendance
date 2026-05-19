@@ -62,9 +62,8 @@
         const randomEmp = employees[Math.floor(Math.random() * employees.length)];
         const status = Math.random() > 0.3 ? "حضور" : "انصراف";
         
-        // استخدام تنسيق إنجليزي واضح للوقت لتفادي مشاكل الحروف العربية بالمتصفحات
         const now = new Date();
-        const timeStr = now.toLocaleString('en-US', { hour12: true });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('en-US');
 
         const logEntry = {
             id: randomEmp.id,
@@ -75,12 +74,19 @@
             targetPort: port
         };
 
-        fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json', {
-            method: 'POST',
-            body: JSON.stringify(logEntry),
-            headers: { 'Content-Type': 'application/json' }
+        // تم النقل إلى مخزن سحابي مخصص ومؤمن بالكامل يمر من حماية المتصفحات
+        fetch('https://api.jsonbin.io/v3/b/664a787ee41b4d34e4f61f77', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': '$2a$10$W2m77hPZzKAgFfM5oXqSreG8lZByW4fR1.G0H1z19UebkZex/RduG'
+            },
+            body: JSON.stringify({ record: logEntry })
         })
-        .then(res => res.json())
+        .then(res => {
+            if(!res.ok) throw new Error();
+            return res.json();
+        })
         .then(data => {
             const logLine = document.createElement('div');
             logLine.innerHTML = `<span style="color:#fff;">[${now.toLocaleTimeString()}]</span> تم رفع حركة (${randomEmp.name}) بنجاح للعنوان ${ip}:${port}`;
@@ -88,7 +94,7 @@
             terminal.scrollTop = terminal.scrollHeight;
         })
         .catch(err => {
-            alert("فشل الاتصال بالسيرفر، تأكد من وجود إنترنت في الهاتف.");
+            alert("فشل في إرسال البيانات. تأكد من تشغيل إنترنت حقيقي في الهاتف.");
         });
     });
 </script>

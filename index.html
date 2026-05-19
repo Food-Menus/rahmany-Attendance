@@ -83,75 +83,53 @@
 
         statusBar.style.display = "block";
         statusBar.className = "status-bar status-loading";
-        statusBar.innerText = `جاري جلب البيانات من السيرفر السحابي ومطابقتها...`;
-        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات...</td></tr>`;
+        statusBar.innerText = `جاري الاتصال الآمن بجلب آخر حركة...`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري المزامنة السحابية...</td></tr>`;
 
-        fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json')
+        // جلب البيانات من السيرفر المخصص الثابت
+        fetch('https://api.jsonbin.io/v3/b/664a787ee41b4d34e4f61f77/latest', {
+            headers: {
+                'X-Master-Key': '$2a$10$W2m77hPZzKAgFfM5oXqSreG8lZByW4fR1.G0H1z19UebkZex/RduG'
+            }
+        })
         .then(res => res.json())
         .then(data => {
-            const allLogs = data ? Object.keys(data).map(key => data[key]) : [];
+            const log = data.record;
             
-            if(allLogs.length === 0) {
+            if(!log || !log.targetIp) {
                 statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `السيرفر السحابي فارغ تماماً، يرجى إرسال بصمة من الهاتف أولاً.`;
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد أي سجلات في قاعدة البيانات حالياً.</td></tr>`;
+                statusBar.innerText = `المخزن فارغ، يرجى الضغط على زر الإرسال من الهاتف أولاً.`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد سجلات.</td></tr>`;
                 return;
             }
 
-            // تصفية السجلات السليمة فقط التي تحتوي على حقول الـ IP والـ Port لتجنب مخلفات السيرفر القديمة
-            const validLogs = allLogs.filter(log => log && log.targetIp && log.targetPort);
-
-            // الفلترة بناءً على الإدخال الحالي
-            let filteredLogs = validLogs.filter(log => log.targetIp === ip && log.targetPort === port);
-            let showingAll = false;
-
-            if(filteredLogs.length === 0) {
-                showingAll = true;
-                // عرض آخر 10 حركات سليمة البنية متوفرة على السيرفر
-                filteredLogs = validLogs.slice(-10); 
-                statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `تنبيه: لم نجد حركات مطابقة تماماً للعنوان ${ip}:${port}، تم عرض آخر حركات سليمة مصلة للسيرفر لمعاينة الـ IP الصحيح.`;
-            } else {
+            // الفلترة والمطابقة
+            if(log.targetIp === ip && log.targetPort === port) {
                 statusBar.className = "status-bar status-success";
-                statusBar.innerText = `تم بنجاح سحب عدد (${filteredLogs.length}) حركة بصمة للعنوان ${ip}:${port}.`;
-            }
-            
-            if(filteredLogs.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لم يتم العثور على أي حركات منسقة بشكل صحيح على هذا السيرفر المشترك، يرجى الضغط على زر الإرسال من الهاتف أولاً لتوليد حركة جديدة.</td></tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = ""; // تنظيف الجدول
-            
-            filteredLogs.reverse().forEach(log => {
-                const tr = document.createElement('tr');
+                statusBar.innerText = `تم الاتصال وسحب الحركة الحية الحالية للجهاز بنجاح!`;
                 
-                // حماية كاملة ضد حقول undefined عن طريق وضع قيم افتراضية مرنة
-                const empId = log.id || "بدون كود";
-                const empName = log.name || "مستخدم مجهول";
-                const logTime = log.time || "غير محدد";
-                const logStatus = log.status || "حضور";
-                const logIp = log.targetIp || "192.168.1.150";
-                const logPort = log.targetPort || "4370";
-
-                const badgeClass = logStatus === "حضور" ? "badge badge-in" : "badge badge-out";
-                const ipDisplay = showingAll ? `<br><small style="color:#e74c3c; font-weight:bold;">[أرسل بـ IP: ${logIp} : ${logPort}]</small>` : '';
-
+                tableBody.innerHTML = "";
+                const tr = document.createElement('tr');
+                const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
+                
                 tr.innerHTML = `
-                    <td><strong>#${empId}</strong></td>
-                    <td>${empName} ${ipDisplay}</td>
-                    <td>${logTime}</td>
-                    <td><span class="${badgeClass}">${logStatus}</span></td>
+                    <td><strong>#${log.id}</strong></td>
+                    <td>${log.name}</td>
+                    <td>${log.time}</td>
+                    <td><span class="${badgeClass}">${log.status}</span></td>
                 `;
                 tableBody.appendChild(tr);
-            });
+            } else {
+                statusBar.className = "status-bar status-loading";
+                statusBar.innerText = `تم الاتصال بالسيرفر، ولكن أحدث حركة قادمة من IP مختلف وهو [${log.targetIp}:${log.targetPort}]`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">عدّل الـ IP في المربع بالأعلى ليتطابق مع الهاتف وسيعرض لك الداتا فوراً.</td></tr>`;
+            }
         })
         .catch(err => {
             statusBar.className = "status-bar";
             statusBar.style.backgroundColor = "#f8d7da";
             statusBar.style.color = "#721c24";
-            statusBar.innerText = "فشل الاتصال بالسيرفر السحابي، تأكد من اتصال الإنترنت لديك.";
-            tableBody.innerHTML = `<tr><td colspan="4" class="empty-row" style="color: #721c24;">خطأ في الشبكة أثناء جلب البيانات.</td></tr>`;
+            statusBar.innerText = "خطأ أمني أو في الشبكة أثناء الاتصال بالسيرفر.";
         });
     });
 </script>
