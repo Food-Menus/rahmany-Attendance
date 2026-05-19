@@ -86,40 +86,51 @@
         // 1. تشغيل حالة التحميل
         statusBar.style.display = "block";
         statusBar.className = "status-bar status-loading";
-        statusBar.innerText = `جاري الاتصال بالسيرفر السحابي والتحقق من حركات الجهاز ${ip}:${port}...`;
-        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات ومطابقتها...</td></tr>`;
+        statusBar.innerText = `جاري جلب البيانات من السيرفر السحابي ومطابقتها...`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات...</td></tr>`;
 
-        // 2. جلب البيانات من Firebase مباشرة بدلاً من LocalStorage
+        // 2. جلب البيانات من Firebase
         fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json')
         .then(res => res.json())
         .then(data => {
-            // تحويل الـ Object القادم من Firebase إلى Array لسهولة الفلترة
+            // تحويل الكائنات القادمة من Firebase إلى مصفوفة (Array)
             const allLogs = data ? Object.keys(data).map(key => data[key]) : [];
             
-            // فلترة البيانات بناءً على الـ IP والبورت المكتوبين لتظهر حركات هذا الجهاز فقط
-            const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
-
-            if(filteredLogs.length === 0) {
+            if(allLogs.length === 0) {
                 statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `تم الاتصال بنجاح، ولكن لم يتم العثور على أي حركات بصمة مسجلة للعنوان ${ip}:${port} اليوم.`;
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جهاز البصمة لا يحتوي على سجلات جديدة متوافقة مع هذا العنوان.</td></tr>`;
+                statusBar.innerText = `السيرفر السحابي فارغ تماماً، يرجى إرسال بصمة من الهاتف أولاً.`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد أي سجلات في قاعدة البيانات حالياً.</td></tr>`;
                 return;
             }
 
-            // 3. عرض البيانات بنجاح في حالة التطابق
-            statusBar.className = "status-bar status-success";
-            statusBar.innerText = `تم الاتصال بنجاح! تم العثور وسحب عدد (${filteredLogs.length}) حركة بصمة من السيرفر السحابي.`;
+            // الفلترة بناءً على الـ IP والبورت المكتوبين
+            let filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
+            let showingAll = false;
+
+            // إذا لم يجد بيانات مطابقة تماماً للـ IP والمنفذ، سيعرض آخر 10 حركات عامة وصلت السيرفر كبديل كاشف
+            if(filteredLogs.length === 0) {
+                showingAll = true;
+                filteredLogs = allLogs.slice(-10); // اقتطاع آخر 10 حركات فقط
+                statusBar.className = "status-bar status-loading";
+                statusBar.innerText = `تنبيه: لم نجد حركات للعنوان ${ip}:${port}، ولكن تم عرض آخر حركات عامة على السيرفر للتأكد من الاتصال.`;
+            } else {
+                statusBar.className = "status-bar status-success";
+                statusBar.innerText = `تم بنجاح سحب عدد (${filteredLogs.length}) حركة بصمة للعنوان ${ip}:${port}.`;
+            }
             
-            tableBody.innerHTML = ""; // تنظيف الجدول قبل الحقن
+            tableBody.innerHTML = ""; // تنظيف الجدول
             
-            // ترتيب الحركات من الأحدث للأقدم وعرضهم في الجدول
+            // عرض السجلات بترتيب تصاعدي من الأحدث للأقدم
             filteredLogs.reverse().forEach(log => {
                 const tr = document.createElement('tr');
                 const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
                 
+                // إذا كنا نعرض البيانات العامة بدون فلترة، سنوضح الـ IP القادم من الهاتف بلون أحمر صغير
+                const ipDisplay = showingAll ? `<br><small style="color:#e74c3c; font-weight:bold;">[جاءت من IP: ${log.targetIp || 'غير معرف'} : ${log.targetPort || ''}]</small>` : '';
+
                 tr.innerHTML = `
                     <td><strong>#${log.id}</strong></td>
-                    <td>${log.name}</td>
+                    <td>${log.name} ${ipDisplay}</td>
                     <td>${log.time}</td>
                     <td><span class="${badgeClass}">${log.status}</span></td>
                 `;
