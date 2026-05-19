@@ -3,96 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي جهاز البصمة - محلي</title>
+    <title>محاكاة جهاز البصمة</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin: 20px auto; border-top: 6px solid #e74c3c; }
-        h2 { text-align: center; color: #c0392b; margin-top: 0; }
-        .network-config { background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
-        label { font-size: 13px; font-weight: bold; color: #555; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 90%; }
-        button { background-color: #e74c3c; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; transition: background 0.2s; }
-        button:hover { background-color: #c0392b; }
-        .terminal { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 6px; font-family: monospace; max-height: 200px; overflow-y: auto; font-size: 13px; margin-top: 15px; }
+        * {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 500px;
+            text-align: center;
+        }
+        h1 {
+            color: #2a5298;
+            border-bottom: 3px solid #2a5298;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .badge {
+            background: #ff9800;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 15px auto;
+            display: inline-block;
+        }
+        .input-group {
+            margin: 20px 0;
+            text-align: right;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #1e3c72;
+            transform: scale(1.02);
+        }
+        .data-log {
+            background: #f4f4f4;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: right;
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
+            font-family: monospace;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>📟 محاكاة جهاز البصمة</h1>
+        <div class="badge">يرسل بيانات حضور وهمية عبر الشبكة</div>
+        
+        <div class="input-group">
+            <label>🌐 عنوان IP للجهاز المستقبل (Management System)</label>
+            <input type="text" id="targetIp" placeholder="مثال: 192.168.1.100" value="127.0.0.1">
+        </div>
+        <div class="input-group">
+            <label>🔌 المنفذ (Port)</label>
+            <input type="number" id="targetPort" placeholder="مثال: 3000" value="8080">
+        </div>
 
-<div class="container">
-    <h2>📟 جهاز البصمة (بث مباشر داخل المتصفح 📡)</h2>
-    <p style="text-align: center; color: #666; font-size: 14px;">اضغط لإرسال البصمة مباشرة لتابة الإدارة بدون سيرفرات.</p>
-    
-    <div class="network-config">
-        <strong>🌐 إعدادات عنوان الجهاز الحالية:</strong>
-        <div class="grid">
-            <div>
-                <label>عنوان الـ IP الافتراضي</label>
-                <input type="text" id="devIp" value="192.168.1.150">
-            </div>
-            <div>
-                <label>رقم المنفذ (Port)</label>
-                <input type="number" id="devPort" value="4370">
-            </div>
+        <div>
+            <button id="sendSingleBtn">➕ إرسال بصمة موظف عشوائي</button>
+            <button id="startAutoBtn">🔄 بدء الإرسال التلقائي (كل 5 ثوان)</button>
+            <button id="stopAutoBtn">⏹️ إيقاف الإرسال</button>
+        </div>
+
+        <div class="data-log">
+            <strong>📋 سجل الإرسال:</strong>
+            <div id="logContainer"></div>
         </div>
     </div>
 
-    <button id="sendBtn">🟢 تسجيل وإرسال بصمة حية فورا</button>
+    <script>
+        // بيانات موظفين وهمية
+        const employees = [
+            { id: 101, name: "أحمد محمد" },
+            { id: 102, name: "سارة علي" },
+            { id: 103, name: "محمد عبدالله" },
+            { id: 104, name: "نورة خالد" },
+            { id: 105, name: "خالد إبراهيم" }
+        ];
 
-    <div style="font-weight: bold; margin-top: 15px; color: #555;">🖥️ شاشة مراقبة الإرسال:</div>
-    <div class="terminal" id="terminalLogs">
-        [تنبيه] القناة المحلية جاهزة لبث البيانات فوراً...
-    </div>
-</div>
+        let autoInterval = null;
 
-<script>
-    // إنشاء قناة البث المحلية باسم ثابت
-    const fingerprintChannel = new BroadcastChannel('fingerprint_channel');
+        function getRandomEmployee() {
+            const emp = employees[Math.floor(Math.random() * employees.length)];
+            const now = new Date();
+            return {
+                employeeId: emp.id,
+                name: emp.name,
+                timestamp: now.toISOString(),
+                timeFormatted: now.toLocaleTimeString('ar-EG'),
+                dateFormatted: now.toLocaleDateString('ar-EG'),
+                type: "بصمة حضور"
+            };
+        }
 
-    const employees = [
-        { id: 101, name: "محمد حسين" },
-        { id: 102, name: "أحمد علي" },
-        { id: 103, name: "سارة محمود" },
-        { id: 104, name: "مصطفى كريم" },
-        { id: 105, name: "فاطمة عمر" }
-    ];
+        async function sendAttendance(data, ip, port) {
+            // بناء عنوان URL الحقيقي (لاحظ: لأسباب أمنية في المتصفح، ستحتاج لسيرفر وسيط لتجاوز CORS)
+            const url = `http://${ip}:${port}/api/attendance`;
+            
+            // إضافة سجل في الواجهة
+            const logDiv = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `📤 إرسال: ${data.name} (${data.employeeId}) الساعة ${data.timeFormatted} إلى ${ip}:${port} ... `;
+            logDiv.prepend(logEntry);
 
-    // مصفوفة محلية لحفظ البصمات في الـ LocalStorage عشان نضمن إنها متضيعش لو قفلت التاب
-    let localSavedLogs = JSON.parse(localStorage.getItem('fingerprint_db')) || [];
+            try {
+                // محاكاة حقيقية للإرسال - لكن المتصفح سيمنع الوصول لـ CORS ما لم يكن السيرفر يسمح
+                // لحل هذا تجريبياً، سنستخدم fetch مع no-cors (لن يعطي رد لكن يظهر المحاولة)
+                // أو الأفضل: سنستخدم خدمة وهمية مؤقتة أو توثيق أن هذا هو الكود الحقيقي.
+                
+                // هذه محاولة حقيقية: 
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    logEntry.innerHTML += `<span class="success">✅ تم الإرسال بنجاح</span>`;
+                } else {
+                    logEntry.innerHTML += `<span class="error">❌ فشل: ${response.status}</span>`;
+                }
+            } catch (error) {
+                logEntry.innerHTML += `<span class="error">⚠️ خطأ في الاتصال: ${error.message} (تأكد من أن برنامج الإدارة يعمل على هذا IP والمنفذ)</span>`;
+                console.error(error);
+            }
 
-    document.getElementById('sendBtn').addEventListener('click', function() {
-        const ip = document.getElementById('devIp').value.trim();
-        const port = document.getElementById('devPort').value.trim();
-        const terminal = document.getElementById('terminalLogs');
+            // إضافة سكرول للأسفل
+            logDiv.scrollTop = 0;
+        }
 
-        const randomEmp = employees[Math.floor(Math.random() * employees.length)];
-        const status = Math.random() > 0.3 ? "حضور" : "انصراف";
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('ar-EG') + ' ' + now.toLocaleDateString('ar-EG');
+        // إرسال باستخدام LocalStorage بديل (للتجربة بدون CORS) - لتوضيح الفكرة فقط
+        // طريقة بديلة للتواصل بين البرنامجين على نفس الجهاز: استخدام localStorage
+        function sendViaLocalStorage(data, ip, port) {
+            const logDiv = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            // تخزين البيانات في localStorage لمحاكاة استقبال برنامج الإدارة
+            const key = `attendance_${Date.now()}`;
+            const attendanceEvent = {
+                ...data,
+                sourceIp: ip,
+                sourcePort: port,
+                receivedAt: new Date().toISOString()
+            };
+            localStorage.setItem(key, JSON.stringify(attendanceEvent));
+            logEntry.innerHTML = `💾 تخزين محلي: تم إرسال بصمة ${data.name} إلى localStorage (محاكاة الشبكة) -> يمكن لبرنامج الإدارة سحبها.`;
+            logDiv.prepend(logEntry);
+            logDiv.scrollTop = 0;
+            
+            // أيضًا تشغيل حدث مخصص لبرنامج الإدارة إذا كان مفتوحاً
+            window.dispatchEvent(new CustomEvent('attendanceDataSent', { detail: attendanceEvent }));
+        }
 
-        const logEntry = {
-            id: randomEmp.id,
-            name: randomEmp.name,
-            time: timeStr,
-            status: status,
-            targetIp: ip,
-            targetPort: port
-        };
+        // دمج الطريقتين: محاولة فعلية + تخزين محلي لضمان عمل العرض
+        async function handleSend() {
+            const ip = document.getElementById('targetIp').value;
+            const port = document.getElementById('targetPort').value;
+            const employeeData = getRandomEmployee();
+            
+            // محاولة الإرسال الحقيقية
+            await sendAttendance(employeeData, ip, port);
+            // أيضاً نرسل عبر localStorage لضمان عمل برنامج الإدارة في نفس المتصفح
+            sendViaLocalStorage(employeeData, ip, port);
+        }
 
-        // 1. حفظ في مخزن المتصفح (عشان تابة السحب تقرأ منه لاحقاً)
-        localSavedLogs.push(logEntry);
-        localStorage.setItem('fingerprint_db', JSON.stringify(localSavedLogs));
-
-        // 2. بث الحركة فوراً لتابة السحب المفتوحة حالياً في نفس اللحظة
-        fingerprintChannel.postMessage(logEntry);
-
-        // 3. تحديث شاشة الجهاز
-        const logLine = document.createElement('div');
-        logLine.innerHTML = `<span style="color:#fff;">[${now.toLocaleTimeString()}]</span> تم بث حركة (${randomEmp.name}) للعنوان ${ip}:${port}`;
-        terminal.appendChild(logLine);
-        terminal.scrollTop = terminal.scrollHeight;
-    });
-</script>
-
+        document.getElementById('sendSingleBtn').addEventListener('click', handleSend);
+        
+        document.getElementById('startAutoBtn').addEventListener('click', () => {
+            if (autoInterval) clearInterval(autoInterval);
+            autoInterval = setInterval(handleSend, 5000);
+            alert("✅ بدأ الإرسال التلقائي كل 5 ثوانٍ");
+        });
+        
+        document.getElementById('stopAutoBtn').addEventListener('click', () => {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                alert("⏹️ تم إيقاف الإرسال التلقائي");
+            }
+        });
+    </script>
 </body>
 </html>

@@ -3,125 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج إدارة الحضور والانصراف - محلي</title>
+    <title>نظام إدارة الحضور - سحب البصمات</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 850px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 6px solid #2c3e50; }
-        h2 { margin-top: 0; color: #2c3e50; }
-        .search-box { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: flex-end; }
-        .input-group { display: flex; flex-direction: column; }
-        label { font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #666; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        button { background-color: #27ae60; color: white; border: none; padding: 11px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; transition: background 0.2s; }
-        button:hover { background-color: #219653; }
-        .status-bar { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 14px; display: none; }
-        .status-loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        .status-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #333; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-in { background-color: #e3f2fd; color: #0d47a1; }
-        .badge-out { background-color: #ffebee; color: #b71c1c; }
-        .empty-row { text-align: center; color: #999; padding: 30px; }
+        * {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 800px;
+            max-width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #203a43;
+            text-align: center;
+            border-right: 5px solid #2c5364;
+            padding-right: 15px;
+        }
+        .config-panel {
+            background: #eef2f5;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #2c5364;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #2c5364;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            height: 42px;
+        }
+        button:hover {
+            background: #0f2027;
+        }
+        .fetch-btn {
+            background: #27ae60;
+        }
+        .fetch-btn:hover {
+            background: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            direction: rtl;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #2c5364;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .status {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .clear-btn {
+            background: #e74c3c;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div class="card">
-        <h2>🖥️ نظام Attendance Management (سحب محلي مباشر 📡)</h2>
-        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">اضغط "سحب" لجلب البصمات المخزنة، أو تابع الجدول مباشرة عند الضغط من التاب الأخرى.</p>
+    <div class="container">
+        <h1>📊 نظام إدارة الحضور (سحب بصمات الموظفين)</h1>
         
-        <div class="search-box">
+        <div class="config-panel">
             <div class="input-group">
-                <label>عنوان الـ IP المراد سحبه</label>
-                <input type="text" id="searchIp" value="192.168.1.150">
+                <label>🌐 IP جهاز البصمة</label>
+                <input type="text" id="deviceIp" value="127.0.0.1" placeholder="IP البصمة">
             </div>
             <div class="input-group">
-                <label>رقم المنفذ (Port)</label>
-                <input type="number" id="searchPort" value="4370">
+                <label>🔌 Port جهاز البصمة</label>
+                <input type="number" id="devicePort" value="8080" placeholder="المنفذ">
             </div>
-            <button id="fetchBtn">سحب البصمات الآن</button>
+            <button id="connectBtn" class="fetch-btn">🔄 سحب البصمات الآن</button>
+            <button id="clearTableBtn" class="clear-btn">🗑️ مسح الجدول</button>
         </div>
 
-        <div id="statusBar" class="status-bar"></div>
+        <div id="statusMsg" class="status">📡 انتظر حتى تقوم بالضغط على "سحب البصمات" أو انتظار الاستقبال التلقائي</div>
+
+        <h3>📋 سجل الحضور المسحوب:</h3>
+        <div style="overflow-x: auto;">
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>رقم الموظف</th>
+                        <th>الاسم</th>
+                        <th>نوع العملية</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>مصدر الجهاز</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="6" style="text-align:center;">لا توجد بيانات بعد</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="card">
-        <h3 style="margin-top: 0; color: #34495e;">📊 سجل البصمات المستلمة (تحديث فوري)</h3>
-        <table>
-            <thead>
+    <script>
+        let attendanceRecords = [];
+
+        // عرض الجدول
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            if (attendanceRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد بيانات بعد</td></tr>';
+                return;
+            }
+            tbody.innerHTML = attendanceRecords.map(rec => `
                 <tr>
-                    <th>كود الموظف ID</th>
-                    <th>اسم الموظف</th>
-                    <th>وقت تسجيل البصمة</th>
-                    <th>نوع الحركة</th>
+                    <td>${rec.employeeId}</td>
+                    <td>${rec.name}</td>
+                    <td>${rec.type || 'بصمة حضور'}</td>
+                    <td>${new Date(rec.timestamp).toLocaleDateString('ar-EG')}</td>
+                    <td>${new Date(rec.timestamp).toLocaleTimeString('ar-EG')}</td>
+                    <td>${rec.sourceIp || 'غير معروف'}:${rec.sourcePort || ''}</td>
                 </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr>
-                    <td colspan="4" class="empty-row">لا توجد بيانات مسحوبة. اضغط سحب أو أرسل بصمات جديدة من التاب الأخرى.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const statusBar = document.getElementById('statusBar');
-    const tableBody = document.getElementById('tableBody');
-
-    // الدالة المسؤولة عن عرض وتحديث الجدول
-    function renderLogs() {
-        const ip = document.getElementById('searchIp').value.trim();
-        const port = document.getElementById('searchPort').value.trim();
-
-        // قراءة كل البصمات المخزنة في المتصفح
-        const allLogs = JSON.parse(localStorage.getItem('fingerprint_db')) || [];
-        
-        // فلترة البصمات حسب الـ IP والـ Port المكتوبين
-        const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
-
-        statusBar.style.display = "block";
-
-        if(filteredLogs.length === 0) {
-            statusBar.className = "status-bar status-loading";
-            statusBar.innerText = `لم يتم العثور على بصمات تطابق العنوان ${ip}:${port}`;
-            tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد بصمات متطابقة. جرب إرسال بصمة من التاب الأخرى أولاً بنفس الأرقام.</td></tr>`;
-            return;
+            `).join('');
         }
 
-        statusBar.className = "status-bar status-success";
-        statusBar.innerText = `تم بنجاح! تم مزامنة وسحب (${filteredLogs.length}) حركة بصمة محلياً بنجاح.`;
-        
-        tableBody.innerHTML = "";
-        // عرض الأحدث فوق
-        [...filteredLogs].reverse().forEach(log => {
-            const tr = document.createElement('tr');
-            const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
+        // إضافة سجل جديد
+        function addAttendanceRecord(data) {
+            attendanceRecords.unshift(data); // الأحدث في الأعلى
+            if (attendanceRecords.length > 50) attendanceRecords.pop();
+            renderTable();
+            document.getElementById('statusMsg').innerHTML = `✅ تم استلام بصمة جديدة: ${data.name} الساعة ${new Date(data.timestamp).toLocaleTimeString('ar-EG')}`;
+            setTimeout(() => {
+                if (document.getElementById('statusMsg').innerHTML.includes('تم استلام')) {
+                    document.getElementById('statusMsg').innerHTML = '📡 النظام جاهز لاستقبال البصمات';
+                }
+            }, 3000);
+        }
+
+        // محاكاة السحب من جهاز البصمة عبر الـ IP والـ Port
+        // في الواقع، البرنامج الحقيقي يحتاج إلى API على جهاز البصمة يعرض البيانات.
+        // سنقوم هنا بمحاكاة الطلب وجلب البيانات من localStorage أو من API وهمي.
+        async function fetchFromDevice(ip, port) {
+            document.getElementById('statusMsg').innerHTML = `⏳ جاري الاتصال بجهاز البصمة على ${ip}:${port} ...`;
             
-            tr.innerHTML = `
-                <td><strong>#${log.id}</strong></td>
-                <td>${log.name}</td>
-                <td>${log.time}</td>
-                <td><span class="${badgeClass}">${log.status}</span></td>
-            `;
-            tableBody.appendChild(tr);
+            // محاولة حقيقية لـ API (لكنها ستفشل عادةً لعدم وجود سيرفر حقيقي)
+            const url = `http://${ip}:${port}/api/get-attendance`;
+            try {
+                const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.records && Array.isArray(data.records)) {
+                        data.records.forEach(rec => addAttendanceRecord(rec));
+                        document.getElementById('statusMsg').innerHTML = `✅ تم سحب ${data.records.length} سجلات من الجهاز`;
+                    }
+                } else {
+                    throw new Error('فشل الاتصال بالجهاز');
+                }
+            } catch (error) {
+                console.warn("الاتصال المباشر فشل، نستخدم localStorage للمحاكاة:", error);
+                // البديل: قراءة البيانات المخزنة من localStorage (التي يرسلها برنامج المحاكاة)
+                let found = false;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('attendance_')) {
+                        const item = localStorage.getItem(key);
+                        if (item) {
+                            try {
+                                const record = JSON.parse(item);
+                                addAttendanceRecord(record);
+                                localStorage.removeItem(key);
+                                found = true;
+                            } catch(e) {}
+                        }
+                    }
+                }
+                if (found) {
+                    document.getElementById('statusMsg').innerHTML = `📥 تم استيراد بصمات جديدة من التخزين المحلي (محاكاة الشبكة)`;
+                } else {
+                    document.getElementById('statusMsg').innerHTML = `⚠️ لا توجد بيانات جديدة من ${ip}:${port}. تأكد من تشغيل برنامج محاكاة البصمة وإرسال البيانات أولاً.`;
+                }
+            }
+        }
+
+        // الاستماع للأحداث المباشرة من برنامج المحاكاة (نافذة واحدة)
+        window.addEventListener('attendanceDataSent', (event) => {
+            if (event.detail) {
+                addAttendanceRecord(event.detail);
+                document.getElementById('statusMsg').innerHTML = `📡 تم استلام بصمة فورية من جهاز البصمة (حدث محلي)`;
+            }
         });
-    }
 
-    // زر السحب التقليدي
-    document.getElementById('fetchBtn').addEventListener('click', renderLogs);
+        // زر السحب اليدوي
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const ip = document.getElementById('deviceIp').value;
+            const port = document.getElementById('devicePort').value;
+            fetchFromDevice(ip, port);
+        });
 
-    // [الماجيك الحقيقي]: الاستماع لقناة البث المحلية
-    const fingerprintChannel = new BroadcastChannel('fingerprint_channel');
-    fingerprintChannel.onmessage = function(event) {
-        // بمجرد ما يجيلنا إشعار إن التاب التانية بعتت بصمة، بنحدث الجدول تلقائياً في نفس اللحظة!
-        renderLogs();
-    };
-</script>
+        // مسح الجدول
+        document.getElementById('clearTableBtn').addEventListener('click', () => {
+            attendanceRecords = [];
+            renderTable();
+            document.getElementById('statusMsg').innerHTML = '🗑️ تم مسح جميع سجلات الحضور';
+        });
 
+        // فحص تلقائي للـ localStorage كل 3 ثوانٍ لمحاكاة الاستماع الدائم
+        setInterval(() => {
+            const ip = document.getElementById('deviceIp').value;
+            const port = document.getElementById('devicePort').value;
+            let found = false;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('attendance_')) {
+                    const item = localStorage.getItem(key);
+                    if (item) {
+                        try {
+                            const record = JSON.parse(item);
+                            // يمكن مقارنة IP/Port إذا أردت
+                            addAttendanceRecord(record);
+                            localStorage.removeItem(key);
+                            found = true;
+                        } catch(e) {}
+                    }
+                }
+            }
+            if (found) {
+                document.getElementById('statusMsg').innerHTML = `🔄 تم سحب بصمات جديدة تلقائياً من ${ip}:${port}`;
+                setTimeout(() => {
+                    if (document.getElementById('statusMsg').innerHTML.includes('تم سحب')) {
+                        document.getElementById('statusMsg').innerHTML = '📡 النظام في وضع الاستماع التلقائي';
+                    }
+                }, 2000);
+            }
+        }, 3000);
+    </script>
 </body>
 </html>
