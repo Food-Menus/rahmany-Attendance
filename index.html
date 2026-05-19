@@ -3,64 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الحضور - سحب البصمات</title>
+    <title>نظام إدارة الحضور - نسخة الشبكة</title>
     <style>
-        * {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
         }
         .container {
             background: white;
             border-radius: 20px;
             padding: 25px;
-            width: 800px;
-            max-width: 100%;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
-        h1 {
-            color: #203a43;
-            text-align: center;
-            border-right: 5px solid #2c5364;
-            padding-right: 15px;
-        }
+        h1 { color: #764ba2; text-align: center; }
         .config-panel {
-            background: #eef2f5;
-            padding: 15px;
+            background: #f7f7f7;
+            padding: 20px;
             border-radius: 15px;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             flex-wrap: wrap;
             margin-bottom: 20px;
             align-items: flex-end;
         }
-        .input-group {
-            flex: 1;
-            min-width: 150px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 5px;
-            color: #2c5364;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
+        .input-group { flex: 1; min-width: 150px; }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #555; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button {
-            background: #2c5364;
+            background: #764ba2;
             color: white;
             border: none;
             padding: 8px 20px;
@@ -70,33 +45,11 @@
             transition: 0.3s;
             height: 42px;
         }
-        button:hover {
-            background: #0f2027;
-        }
-        .fetch-btn {
-            background: #27ae60;
-        }
-        .fetch-btn:hover {
-            background: #2ecc71;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            direction: rtl;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background: #2c5364;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
+        button:hover { background: #667eea; transform: scale(1.02); }
+        .fetch-btn { background: #27ae60; }
+        .fetch-btn:hover { background: #2ecc71; }
+        .clear-btn { background: #e74c3c; }
+        .clear-btn:hover { background: #c0392b; }
         .status {
             background: #d4edda;
             color: #155724;
@@ -104,183 +57,186 @@
             border-radius: 10px;
             margin-bottom: 15px;
             text-align: center;
+            font-weight: bold;
         }
-        .clear-btn {
-            background: #e74c3c;
-            margin-right: 10px;
+        .status.error { background: #f8d7da; color: #721c24; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #764ba2;
+            color: white;
+        }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .auto-refresh {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .stats {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 نظام إدارة الحضور (سحب بصمات الموظفين)</h1>
+        <h1>📊 نظام إدارة الحضور (سحب البصمات)</h1>
         
         <div class="config-panel">
             <div class="input-group">
-                <label>🌐 IP جهاز البصمة</label>
-                <input type="text" id="deviceIp" value="127.0.0.1" placeholder="IP البصمة">
+                <label>🌐 عنوان IP لسيرفر البصمة</label>
+                <input type="text" id="serverIp" value="localhost" placeholder="مثال: 192.168.1.100">
+                <small>📍 نفس IP الذي يعمل عليه server.js</small>
             </div>
             <div class="input-group">
-                <label>🔌 Port جهاز البصمة</label>
-                <input type="number" id="devicePort" value="8080" placeholder="المنفذ">
+                <label>🔌 منفذ السيرفر</label>
+                <input type="number" id="serverPort" value="3000">
             </div>
-            <button id="connectBtn" class="fetch-btn">🔄 سحب البصمات الآن</button>
-            <button id="clearTableBtn" class="clear-btn">🗑️ مسح الجدول</button>
+            <button id="fetchBtn" class="fetch-btn">🔄 سحب البصمات الآن</button>
+            <button id="clearAllBtn" class="clear-btn">🗑️ مسح كل البصمات</button>
         </div>
 
-        <div id="statusMsg" class="status">📡 انتظر حتى تقوم بالضغط على "سحب البصمات" أو انتظار الاستقبال التلقائي</div>
+        <div id="statusMsg" class="status">✅ النظام جاهز - اضغط "سحب البصمات"</div>
 
-        <h3>📋 سجل الحضور المسحوب:</h3>
+        <div class="auto-refresh">
+            <label>
+                <input type="checkbox" id="autoRefreshCheckbox"> التحديث التلقائي كل 5 ثوانٍ
+            </label>
+        </div>
+
+        <div class="stats" id="stats">
+            📈 إحصائيات: 0 بصمة مسجلة
+        </div>
+
         <div style="overflow-x: auto;">
             <table id="attendanceTable">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>رقم الموظف</th>
                         <th>الاسم</th>
                         <th>نوع العملية</th>
                         <th>التاريخ</th>
                         <th>الوقت</th>
-                        <th>مصدر الجهاز</th>
+                        <th>جهاز البصمة</th>
+                        <th>وقت الاستلام</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="6" style="text-align:center;">لا توجد بيانات بعد</td></tr>
+                    <tr><td colspan="8" style="text-align:center;">لا توجد بيانات - اضغط "سحب البصمات"</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        let attendanceRecords = [];
-
-        // عرض الجدول
-        function renderTable() {
+        let autoRefreshInterval = null;
+        
+        async function fetchAttendance() {
+            const serverIp = document.getElementById('serverIp').value;
+            const serverPort = document.getElementById('serverPort').value;
+            const url = `http://${serverIp}:${serverPort}/api/attendance`;
+            
+            const statusDiv = document.getElementById('statusMsg');
+            statusDiv.className = 'status';
+            statusDiv.innerHTML = `⏳ جاري سحب البيانات من ${serverIp}:${serverPort}...`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                if (data.success && data.records) {
+                    renderTable(data.records);
+                    statusDiv.innerHTML = `✅ تم سحب ${data.records.length} بصمة بنجاح`;
+                    statusDiv.className = 'status';
+                } else {
+                    throw new Error('بيانات غير صالحة');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `⚠️ خطأ في الاتصال: ${error.message}. تأكد من أن السيرفر يعمل على ${serverIp}:${serverPort}`;
+                statusDiv.className = 'status error';
+                console.error(error);
+            }
+        }
+        
+        function renderTable(records) {
             const tbody = document.getElementById('tableBody');
-            if (attendanceRecords.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد بيانات بعد</td></tr>';
+            const statsDiv = document.getElementById('stats');
+            
+            if (!records || records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد بصمات مسجلة</td></tr>';
+                statsDiv.innerHTML = '📈 إحصائيات: 0 بصمة مسجلة';
                 return;
             }
-            tbody.innerHTML = attendanceRecords.map(rec => `
+            
+            tbody.innerHTML = records.map((rec, index) => `
                 <tr>
+                    <td>${index + 1}</td>
                     <td>${rec.employeeId}</td>
                     <td>${rec.name}</td>
                     <td>${rec.type || 'بصمة حضور'}</td>
                     <td>${new Date(rec.timestamp).toLocaleDateString('ar-EG')}</td>
                     <td>${new Date(rec.timestamp).toLocaleTimeString('ar-EG')}</td>
-                    <td>${rec.sourceIp || 'غير معروف'}:${rec.sourcePort || ''}</td>
+                    <td>${rec.deviceIp || 'غير معروف'}</td>
+                    <td>${new Date(rec.receivedAt).toLocaleTimeString('ar-EG')}</td>
                 </tr>
             `).join('');
-        }
-
-        // إضافة سجل جديد
-        function addAttendanceRecord(data) {
-            attendanceRecords.unshift(data); // الأحدث في الأعلى
-            if (attendanceRecords.length > 50) attendanceRecords.pop();
-            renderTable();
-            document.getElementById('statusMsg').innerHTML = `✅ تم استلام بصمة جديدة: ${data.name} الساعة ${new Date(data.timestamp).toLocaleTimeString('ar-EG')}`;
-            setTimeout(() => {
-                if (document.getElementById('statusMsg').innerHTML.includes('تم استلام')) {
-                    document.getElementById('statusMsg').innerHTML = '📡 النظام جاهز لاستقبال البصمات';
-                }
-            }, 3000);
-        }
-
-        // محاكاة السحب من جهاز البصمة عبر الـ IP والـ Port
-        // في الواقع، البرنامج الحقيقي يحتاج إلى API على جهاز البصمة يعرض البيانات.
-        // سنقوم هنا بمحاكاة الطلب وجلب البيانات من localStorage أو من API وهمي.
-        async function fetchFromDevice(ip, port) {
-            document.getElementById('statusMsg').innerHTML = `⏳ جاري الاتصال بجهاز البصمة على ${ip}:${port} ...`;
             
-            // محاولة حقيقية لـ API (لكنها ستفشل عادةً لعدم وجود سيرفر حقيقي)
-            const url = `http://${ip}:${port}/api/get-attendance`;
+            statsDiv.innerHTML = `📈 إحصائيات: ${records.length} بصمة مسجلة`;
+        }
+        
+        async function clearAllAttendance() {
+            const serverIp = document.getElementById('serverIp').value;
+            const serverPort = document.getElementById('serverPort').value;
+            const url = `http://${serverIp}:${serverPort}/api/attendance`;
+            
+            if (!confirm('⚠️ هل أنت متأكد من مسح كل البصمات؟')) return;
+            
             try {
-                const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                const response = await fetch(url, { method: 'DELETE' });
                 if (response.ok) {
-                    const data = await response.json();
-                    if (data.records && Array.isArray(data.records)) {
-                        data.records.forEach(rec => addAttendanceRecord(rec));
-                        document.getElementById('statusMsg').innerHTML = `✅ تم سحب ${data.records.length} سجلات من الجهاز`;
-                    }
+                    document.getElementById('statusMsg').innerHTML = '🗑️ تم مسح جميع البصمات بنجاح';
+                    await fetchAttendance(); // تحديث الجدول
                 } else {
-                    throw new Error('فشل الاتصال بالجهاز');
+                    throw new Error('فشل المسح');
                 }
             } catch (error) {
-                console.warn("الاتصال المباشر فشل، نستخدم localStorage للمحاكاة:", error);
-                // البديل: قراءة البيانات المخزنة من localStorage (التي يرسلها برنامج المحاكاة)
-                let found = false;
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('attendance_')) {
-                        const item = localStorage.getItem(key);
-                        if (item) {
-                            try {
-                                const record = JSON.parse(item);
-                                addAttendanceRecord(record);
-                                localStorage.removeItem(key);
-                                found = true;
-                            } catch(e) {}
-                        }
-                    }
-                }
-                if (found) {
-                    document.getElementById('statusMsg').innerHTML = `📥 تم استيراد بصمات جديدة من التخزين المحلي (محاكاة الشبكة)`;
-                } else {
-                    document.getElementById('statusMsg').innerHTML = `⚠️ لا توجد بيانات جديدة من ${ip}:${port}. تأكد من تشغيل برنامج محاكاة البصمة وإرسال البيانات أولاً.`;
-                }
+                document.getElementById('statusMsg').innerHTML = `❌ خطأ في المسح: ${error.message}`;
+                document.getElementById('statusMsg').className = 'status error';
             }
         }
-
-        // الاستماع للأحداث المباشرة من برنامج المحاكاة (نافذة واحدة)
-        window.addEventListener('attendanceDataSent', (event) => {
-            if (event.detail) {
-                addAttendanceRecord(event.detail);
-                document.getElementById('statusMsg').innerHTML = `📡 تم استلام بصمة فورية من جهاز البصمة (حدث محلي)`;
-            }
-        });
-
-        // زر السحب اليدوي
-        document.getElementById('connectBtn').addEventListener('click', () => {
-            const ip = document.getElementById('deviceIp').value;
-            const port = document.getElementById('devicePort').value;
-            fetchFromDevice(ip, port);
-        });
-
-        // مسح الجدول
-        document.getElementById('clearTableBtn').addEventListener('click', () => {
-            attendanceRecords = [];
-            renderTable();
-            document.getElementById('statusMsg').innerHTML = '🗑️ تم مسح جميع سجلات الحضور';
-        });
-
-        // فحص تلقائي للـ localStorage كل 3 ثوانٍ لمحاكاة الاستماع الدائم
-        setInterval(() => {
-            const ip = document.getElementById('deviceIp').value;
-            const port = document.getElementById('devicePort').value;
-            let found = false;
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('attendance_')) {
-                    const item = localStorage.getItem(key);
-                    if (item) {
-                        try {
-                            const record = JSON.parse(item);
-                            // يمكن مقارنة IP/Port إذا أردت
-                            addAttendanceRecord(record);
-                            localStorage.removeItem(key);
-                            found = true;
-                        } catch(e) {}
-                    }
+        
+        // التحكم في التحديث التلقائي
+        document.getElementById('autoRefreshCheckbox').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+                autoRefreshInterval = setInterval(fetchAttendance, 5000);
+                document.getElementById('statusMsg').innerHTML = '🔄 التحديث التلقائي مفعل (كل 5 ثوانٍ)';
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                    document.getElementById('statusMsg').innerHTML = '⏹️ تم إيقاف التحديث التلقائي';
                 }
             }
-            if (found) {
-                document.getElementById('statusMsg').innerHTML = `🔄 تم سحب بصمات جديدة تلقائياً من ${ip}:${port}`;
-                setTimeout(() => {
-                    if (document.getElementById('statusMsg').innerHTML.includes('تم سحب')) {
-                        document.getElementById('statusMsg').innerHTML = '📡 النظام في وضع الاستماع التلقائي';
-                    }
-                }, 2000);
-            }
-        }, 3000);
+        });
+        
+        document.getElementById('fetchBtn').addEventListener('click', fetchAttendance);
+        document.getElementById('clearAllBtn').addEventListener('click', clearAllAttendance);
+        
+        // تحميل أولي للبيانات
+        fetchAttendance();
     </script>
 </body>
 </html>
