@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي جهاز البصمة - أونلاين</title>
+    <title>محاكي جهاز البصمة - محلي</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin: 20px auto; border-top: 6px solid #e74c3c; }
@@ -20,8 +20,8 @@
 <body>
 
 <div class="container">
-    <h2>📟 جهاز البصمة (إرسال سحابي ☁️)</h2>
-    <p style="text-align: center; color: #666; font-size: 14px;">اضغط من هاتفك لإرسال البصمات إلى السيرفر المشترك.</p>
+    <h2>📟 جهاز البصمة (بث مباشر داخل المتصفح 📡)</h2>
+    <p style="text-align: center; color: #666; font-size: 14px;">اضغط لإرسال البصمة مباشرة لتابة الإدارة بدون سيرفرات.</p>
     
     <div class="network-config">
         <strong>🌐 إعدادات عنوان الجهاز الحالية:</strong>
@@ -37,15 +37,18 @@
         </div>
     </div>
 
-    <button id="sendBtn">🟢 تسجيل وإرسال بصمة عشوائية أونلاين</button>
+    <button id="sendBtn">🟢 تسجيل وإرسال بصمة حية فورا</button>
 
     <div style="font-weight: bold; margin-top: 15px; color: #555;">🖥️ شاشة مراقبة الإرسال:</div>
     <div class="terminal" id="terminalLogs">
-        [تنبيه] الجهاز جاهز لبث البيانات عبر السيرفر أونلاين...
+        [تنبيه] القناة المحلية جاهزة لبث البيانات فوراً...
     </div>
 </div>
 
 <script>
+    // إنشاء قناة البث المحلية باسم ثابت
+    const fingerprintChannel = new BroadcastChannel('fingerprint_channel');
+
     const employees = [
         { id: 101, name: "محمد حسين" },
         { id: 102, name: "أحمد علي" },
@@ -54,6 +57,9 @@
         { id: 105, name: "فاطمة عمر" }
     ];
 
+    // مصفوفة محلية لحفظ البصمات في الـ LocalStorage عشان نضمن إنها متضيعش لو قفلت التاب
+    let localSavedLogs = JSON.parse(localStorage.getItem('fingerprint_db')) || [];
+
     document.getElementById('sendBtn').addEventListener('click', function() {
         const ip = document.getElementById('devIp').value.trim();
         const port = document.getElementById('devPort').value.trim();
@@ -61,9 +67,8 @@
 
         const randomEmp = employees[Math.floor(Math.random() * employees.length)];
         const status = Math.random() > 0.3 ? "حضور" : "انصراف";
-        
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('en-US');
+        const timeStr = now.toLocaleTimeString('ar-EG') + ' ' + now.toLocaleDateString('ar-EG');
 
         const logEntry = {
             id: randomEmp.id,
@@ -74,28 +79,18 @@
             targetPort: port
         };
 
-        // تم النقل إلى مخزن سحابي مخصص ومؤمن بالكامل يمر من حماية المتصفحات
-        fetch('https://api.jsonbin.io/v3/b/664a787ee41b4d34e4f61f77', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': '$2a$10$W2m77hPZzKAgFfM5oXqSreG8lZByW4fR1.G0H1z19UebkZex/RduG'
-            },
-            body: JSON.stringify({ record: logEntry })
-        })
-        .then(res => {
-            if(!res.ok) throw new Error();
-            return res.json();
-        })
-        .then(data => {
-            const logLine = document.createElement('div');
-            logLine.innerHTML = `<span style="color:#fff;">[${now.toLocaleTimeString()}]</span> تم رفع حركة (${randomEmp.name}) بنجاح للعنوان ${ip}:${port}`;
-            terminal.appendChild(logLine);
-            terminal.scrollTop = terminal.scrollHeight;
-        })
-        .catch(err => {
-            alert("فشل في إرسال البيانات. تأكد من تشغيل إنترنت حقيقي في الهاتف.");
-        });
+        // 1. حفظ في مخزن المتصفح (عشان تابة السحب تقرأ منه لاحقاً)
+        localSavedLogs.push(logEntry);
+        localStorage.setItem('fingerprint_db', JSON.stringify(localSavedLogs));
+
+        // 2. بث الحركة فوراً لتابة السحب المفتوحة حالياً في نفس اللحظة
+        fingerprintChannel.postMessage(logEntry);
+
+        // 3. تحديث شاشة الجهاز
+        const logLine = document.createElement('div');
+        logLine.innerHTML = `<span style="color:#fff;">[${now.toLocaleTimeString()}]</span> تم بث حركة (${randomEmp.name}) للعنوان ${ip}:${port}`;
+        terminal.appendChild(logLine);
+        terminal.scrollTop = terminal.scrollHeight;
     });
 </script>
 
