@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج إدارة الحضور والانصراف - سحابي</title>
+    <title>برنامج إدارة الحضور والانصراف - محلي</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 850px; margin: 0 auto; }
@@ -31,8 +31,8 @@
 
 <div class="container">
     <div class="card">
-        <h2>🖥️ نظام Attendance Management (سحب خارجي ☁️)</h2>
-        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">أدخل عنوان الـ IP والـ Port المتطابق مع تابة البصمة لتتمكن من سحب السجلات الحية.</p>
+        <h2>🖥️ نظام Attendance Management (سحب محلي مباشر 📡)</h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">اضغط "سحب" لجلب البصمات المخزنة، أو تابع الجدول مباشرة عند الضغط من التاب الأخرى.</p>
         
         <div class="search-box">
             <div class="input-group">
@@ -43,14 +43,14 @@
                 <label>رقم المنفذ (Port)</label>
                 <input type="number" id="searchPort" value="4370">
             </div>
-            <button id="fetchBtn">اتصال وسحب البيانات اليومية</button>
+            <button id="fetchBtn">سحب البصمات الآن</button>
         </div>
 
         <div id="statusBar" class="status-bar"></div>
     </div>
 
     <div class="card">
-        <h3 style="margin-top: 0; color: #34495e;">📊 سجل البصمات المستلمة من السيرفر أونلاين</h3>
+        <h3 style="margin-top: 0; color: #34495e;">📊 سجل البصمات المستلمة (تحديث فوري)</h3>
         <table>
             <thead>
                 <tr>
@@ -62,7 +62,7 @@
             </thead>
             <tbody id="tableBody">
                 <tr>
-                    <td colspan="4" class="empty-row">لا توجد بيانات مسحوبة. اضغط على الزر بالأعلى للاتصال بالشبكة السحابية.</td>
+                    <td colspan="4" class="empty-row">لا توجد بيانات مسحوبة. اضغط سحب أو أرسل بصمات جديدة من التاب الأخرى.</td>
                 </tr>
             </tbody>
         </table>
@@ -70,64 +70,57 @@
 </div>
 
 <script>
-    document.getElementById('fetchBtn').addEventListener('click', function() {
+    const statusBar = document.getElementById('statusBar');
+    const tableBody = document.getElementById('tableBody');
+
+    // الدالة المسؤولة عن عرض وتحديث الجدول
+    function renderLogs() {
         const ip = document.getElementById('searchIp').value.trim();
         const port = document.getElementById('searchPort').value.trim();
-        const statusBar = document.getElementById('statusBar');
-        const tableBody = document.getElementById('tableBody');
+
+        // قراءة كل البصمات المخزنة في المتصفح
+        const allLogs = JSON.parse(localStorage.getItem('fingerprint_db')) || [];
+        
+        // فلترة البصمات حسب الـ IP والـ Port المكتوبين
+        const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
 
         statusBar.style.display = "block";
-        statusBar.className = "status-bar status-loading";
-        statusBar.innerText = `جاري استجواب السيرفر وفلترة السجلات للعنوان ${ip}:${port}...`;
 
-        // جلب البيانات من السيرفر الجديد المستقر
-        fetch('https://664bbfad35bb1d0c175e927c.mockapi.io/api/v1/fingerprints')
-        .then(res => res.json())
-        .then(data => {
-            if(!data || data.length === 0) {
-                statusBar.innerText = `تم الاتصال، ولكن لا توجد أي سجلات بصمة على السيرفر حالياً.`;
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">السيرفر فارغ.</td></tr>`;
-                return;
-            }
+        if(filteredLogs.length === 0) {
+            statusBar.className = "status-bar status-loading";
+            statusBar.innerText = `لم يتم العثور على بصمات تطابق العنوان ${ip}:${port}`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد بصمات متطابقة. جرب إرسال بصمة من التاب الأخرى أولاً بنفس الأرقام.</td></tr>`;
+            return;
+        }
 
-            const allLogs = data;
+        statusBar.className = "status-bar status-success";
+        statusBar.innerText = `تم بنجاح! تم مزامنة وسحب (${filteredLogs.length}) حركة بصمة محلياً بنجاح.`;
+        
+        tableBody.innerHTML = "";
+        // عرض الأحدث فوق
+        [...filteredLogs].reverse().forEach(log => {
+            const tr = document.createElement('tr');
+            const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
             
-            // فلترة السجلات بناءً على الـ IP والبورت المكتوبين في اللابتوب
-            const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
-
-            if(filteredLogs.length === 0) {
-                statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `تم الاتصال بنجاح، ولكن لم يتم إرسال أي بصمات تطابق الـ IP: ${ip} والـ Port: ${port}`;
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد بصمات متطابقة. تذكر الضغط على إرسال من التاب الأخرى أولاً بنفس الأرقام.</td></tr>`;
-                return;
-            }
-
-            // عرض البيانات المسحوبة بنجاح
-            statusBar.className = "status-bar status-success";
-            statusBar.innerText = `تم بنجاح! تم سحب ومزامنة عدد (${filteredLogs.length}) حركة بصمة من السيرفر السحابي.`;
-            
-            tableBody.innerHTML = "";
-            filteredLogs.reverse().forEach(log => {
-                const tr = document.createElement('tr');
-                const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
-                
-                tr.innerHTML = `
-                    <td><strong>#${log.id}</strong></td>
-                    <td>${log.name}</td>
-                    <td>${log.time}</td>
-                    <td><span class="${badgeClass}">${log.status}</span></td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        })
-        .catch(err => {
-            statusBar.className = "status-bar";
-            statusBar.style.backgroundColor = "#f8d7da";
-            statusBar.style.color = "#721c24";
-            statusBar.innerText = `فشل الاتصال بالسيرفر، تأكد من اتصال الشبكة.`;
-            console.error(err);
+            tr.innerHTML = `
+                <td><strong>#${log.id}</strong></td>
+                <td>${log.name}</td>
+                <td>${log.time}</td>
+                <td><span class="${badgeClass}">${log.status}</span></td>
+            `;
+            tableBody.appendChild(tr);
         });
-    });
+    }
+
+    // زر السحب التقليدي
+    document.getElementById('fetchBtn').addEventListener('click', renderLogs);
+
+    // [الماجيك الحقيقي]: الاستماع لقناة البث المحلية
+    const fingerprintChannel = new BroadcastChannel('fingerprint_channel');
+    fingerprintChannel.onmessage = function(event) {
+        // بمجرد ما يجيلنا إشعار إن التاب التانية بعتت بصمة، بنحدث الجدول تلقائياً في نفس اللحظة!
+        renderLogs();
+    };
 </script>
 
 </body>
