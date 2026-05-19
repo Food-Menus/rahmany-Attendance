@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج إدارة الحضور والانصراف</title>
+    <title>برنامج إدارة الحضور والانصراف - لوحة التحكم السحابية</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 850px; margin: 0 auto; }
@@ -32,8 +32,8 @@
 <div class="container">
     <!-- كارت الاتصال بالشبكة -->
     <div class="card">
-        <h2>🖥️ نظام Attendance Management (لوحة التحكم)</h2>
-        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">قم بالاتصال بجهاز البصمة في الشبكة المحلية لسحب حركات الموظفين اليومية.</p>
+        <h2>🖥️ نظام Attendance Management (لوحة التحكم السحابية)</h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">قم بسحب حركات الموظفين المرفوعة أونلاين من أجهزة البصمة.</p>
         
         <div class="search-box">
             <div class="input-group">
@@ -44,7 +44,7 @@
                 <label>رقم المنفذ (Port)</label>
                 <input type="number" id="searchPort" value="4370">
             </div>
-            <button id="fetchBtn">اتصال وسحب البيانات اليومية</button>
+            <button id="fetchBtn">اتصال وسحب البيانات الحية</button>
         </div>
 
         <div id="statusBar" class="status-bar"></div>
@@ -52,7 +52,7 @@
 
     <!-- كارت عرض جدول البيانات -->
     <div class="card">
-        <h3 style="margin-top: 0; color: #34495e;">📊 سجل حركات الحضور والانصراف المسحوبة</h3>
+        <h3 style="margin-top: 0; color: #34495e;">📊 سجل حركات الحضور والانصراف المسحوبة أونلاين</h3>
         <table>
             <thead>
                 <tr>
@@ -83,30 +83,36 @@
             return;
         }
 
-        // 1. تشغيل حالة التحميل (محاكاة الاتصال الفعلي بالـ Socket)
+        // 1. تشغيل حالة التحميل
         statusBar.style.display = "block";
         statusBar.className = "status-bar status-loading";
-        statusBar.innerText = `جاري محاولة فتح اتصال مع ${ip}:${port} والتحقق من الاستجابة...`;
+        statusBar.innerText = `جاري الاتصال بالسيرفر السحابي والتحقق من حركات الجهاز ${ip}:${port}...`;
         tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات ومطابقتها...</td></tr>`;
 
-        setTimeout(() => {
-            // 2. جلب البيانات من الذاكرة المشتركة وفلترتها بناءً على الـ IP والبورت المكتوبين
-            const allLogs = JSON.parse(localStorage.getItem('network_logs')) || [];
+        // 2. جلب البيانات من Firebase مباشرة بدلاً من LocalStorage
+        fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json')
+        .then(res => res.json())
+        .then(data => {
+            // تحويل الـ Object القادم من Firebase إلى Array لسهولة الفلترة
+            const allLogs = data ? Object.keys(data).map(key => data[key]) : [];
+            
+            // فلترة البيانات بناءً على الـ IP والبورت المكتوبين لتظهر حركات هذا الجهاز فقط
             const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
 
             if(filteredLogs.length === 0) {
                 statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `تم الاتصال بنجاح بـ ${ip}:${port}، ولكن لم يتم العثور على أي حركات بصمة مسجلة لهذا العنوان اليوم.`;
+                statusBar.innerText = `تم الاتصال بنجاح، ولكن لم يتم العثور على أي حركات بصمة مسجلة للعنوان ${ip}:${port} اليوم.`;
                 tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جهاز البصمة لا يحتوي على سجلات جديدة متوافقة مع هذا العنوان.</td></tr>`;
                 return;
             }
 
             // 3. عرض البيانات بنجاح في حالة التطابق
             statusBar.className = "status-bar status-success";
-            statusBar.innerText = `تم الاتصال بنجاح! تم العثور وسحب عدد (${filteredLogs.length}) حركة بصمة من الجهاز.`;
+            statusBar.innerText = `تم الاتصال بنجاح! تم العثور وسحب عدد (${filteredLogs.length}) حركة بصمة من السيرفر السحابي.`;
             
-            tableBody.innerHTML = ""; // تنظيف الجدول
+            tableBody.innerHTML = ""; // تنظيف الجدول قبل الحقن
             
+            // ترتيب الحركات من الأحدث للأقدم وعرضهم في الجدول
             filteredLogs.reverse().forEach(log => {
                 const tr = document.createElement('tr');
                 const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
@@ -119,8 +125,14 @@
                 `;
                 tableBody.appendChild(tr);
             });
-
-        }, 1200); // تأخير ثانية وربع لمحاكاة سرعة الشبكة
+        })
+        .catch(err => {
+            statusBar.className = "status-bar";
+            statusBar.style.backgroundColor = "#f8d7da";
+            statusBar.style.color = "#721c24";
+            statusBar.innerText = "فشل الاتصال بالسيرفر السحابي، تأكد من اتصال الإنترنت لديك.";
+            tableBody.innerHTML = `<tr><td colspan="4" class="empty-row" style="color: #721c24;">خطأ في الشبكة أثناء جلب البيانات.</td></tr>`;
+        });
     });
 </script>
 
