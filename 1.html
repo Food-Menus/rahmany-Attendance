@@ -61,8 +61,10 @@
 
         const randomEmp = employees[Math.floor(Math.random() * employees.length)];
         const status = Math.random() > 0.3 ? "حضور" : "انصراف";
+        
+        // استخدام تنسيق إنجليزي واضح للوقت لتفادي مشاكل الحروف العربية بالمتصفحات
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('ar-EG') + ' ' + now.toLocaleDateString('ar-EG');
+        const timeStr = now.toLocaleString('en-US', { hour12: true });
 
         const logEntry = {
             id: randomEmp.id,
@@ -73,7 +75,6 @@
             targetPort: port
         };
 
-        // إرسال البيانات مباشرة لقاعدة بيانات Firebase عامة مجهزة للتجربة الحية
         fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json', {
             method: 'POST',
             body: JSON.stringify(logEntry),

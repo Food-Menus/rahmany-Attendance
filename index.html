@@ -30,7 +30,6 @@
 <body>
 
 <div class="container">
-    <!-- كارت الاتصال بالشبكة -->
     <div class="card">
         <h2>🖥️ نظام Attendance Management (لوحة التحكم السحابية)</h2>
         <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">قم بسحب حركات الموظفين المرفوعة أونلاين من أجهزة البصمة.</p>
@@ -50,7 +49,6 @@
         <div id="statusBar" class="status-bar"></div>
     </div>
 
-    <!-- كارت عرض جدول البيانات -->
     <div class="card">
         <h3 style="margin-top: 0; color: #34495e;">📊 سجل حركات الحضور والانصراف المسحوبة أونلاين</h3>
         <table>
@@ -83,17 +81,14 @@
             return;
         }
 
-        // 1. تشغيل حالة التحميل
         statusBar.style.display = "block";
         statusBar.className = "status-bar status-loading";
         statusBar.innerText = `جاري جلب البيانات من السيرفر السحابي ومطابقتها...`;
         tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات...</td></tr>`;
 
-        // 2. جلب البيانات من Firebase
         fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json')
         .then(res => res.json())
         .then(data => {
-            // تحويل الكائنات القادمة من Firebase إلى مصفوفة (Array)
             const allLogs = data ? Object.keys(data).map(key => data[key]) : [];
             
             if(allLogs.length === 0) {
@@ -103,36 +98,50 @@
                 return;
             }
 
-            // الفلترة بناءً على الـ IP والبورت المكتوبين
-            let filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
+            // تصفية السجلات السليمة فقط التي تحتوي على حقول الـ IP والـ Port لتجنب مخلفات السيرفر القديمة
+            const validLogs = allLogs.filter(log => log && log.targetIp && log.targetPort);
+
+            // الفلترة بناءً على الإدخال الحالي
+            let filteredLogs = validLogs.filter(log => log.targetIp === ip && log.targetPort === port);
             let showingAll = false;
 
-            // إذا لم يجد بيانات مطابقة تماماً للـ IP والمنفذ، سيعرض آخر 10 حركات عامة وصلت السيرفر كبديل كاشف
             if(filteredLogs.length === 0) {
                 showingAll = true;
-                filteredLogs = allLogs.slice(-10); // اقتطاع آخر 10 حركات فقط
+                // عرض آخر 10 حركات سليمة البنية متوفرة على السيرفر
+                filteredLogs = validLogs.slice(-10); 
                 statusBar.className = "status-bar status-loading";
-                statusBar.innerText = `تنبيه: لم نجد حركات للعنوان ${ip}:${port}، ولكن تم عرض آخر حركات عامة على السيرفر للتأكد من الاتصال.`;
+                statusBar.innerText = `تنبيه: لم نجد حركات مطابقة تماماً للعنوان ${ip}:${port}، تم عرض آخر حركات سليمة مصلة للسيرفر لمعاينة الـ IP الصحيح.`;
             } else {
                 statusBar.className = "status-bar status-success";
                 statusBar.innerText = `تم بنجاح سحب عدد (${filteredLogs.length}) حركة بصمة للعنوان ${ip}:${port}.`;
             }
             
+            if(filteredLogs.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لم يتم العثور على أي حركات منسقة بشكل صحيح على هذا السيرفر المشترك، يرجى الضغط على زر الإرسال من الهاتف أولاً لتوليد حركة جديدة.</td></tr>`;
+                return;
+            }
+
             tableBody.innerHTML = ""; // تنظيف الجدول
             
-            // عرض السجلات بترتيب تصاعدي من الأحدث للأقدم
             filteredLogs.reverse().forEach(log => {
                 const tr = document.createElement('tr');
-                const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
                 
-                // إذا كنا نعرض البيانات العامة بدون فلترة، سنوضح الـ IP القادم من الهاتف بلون أحمر صغير
-                const ipDisplay = showingAll ? `<br><small style="color:#e74c3c; font-weight:bold;">[جاءت من IP: ${log.targetIp || 'غير معرف'} : ${log.targetPort || ''}]</small>` : '';
+                // حماية كاملة ضد حقول undefined عن طريق وضع قيم افتراضية مرنة
+                const empId = log.id || "بدون كود";
+                const empName = log.name || "مستخدم مجهول";
+                const logTime = log.time || "غير محدد";
+                const logStatus = log.status || "حضور";
+                const logIp = log.targetIp || "192.168.1.150";
+                const logPort = log.targetPort || "4370";
+
+                const badgeClass = logStatus === "حضور" ? "badge badge-in" : "badge badge-out";
+                const ipDisplay = showingAll ? `<br><small style="color:#e74c3c; font-weight:bold;">[أرسل بـ IP: ${logIp} : ${logPort}]</small>` : '';
 
                 tr.innerHTML = `
-                    <td><strong>#${log.id}</strong></td>
-                    <td>${log.name} ${ipDisplay}</td>
-                    <td>${log.time}</td>
-                    <td><span class="${badgeClass}">${log.status}</span></td>
+                    <td><strong>#${empId}</strong></td>
+                    <td>${empName} ${ipDisplay}</td>
+                    <td>${logTime}</td>
+                    <td><span class="${badgeClass}">${logStatus}</span></td>
                 `;
                 tableBody.appendChild(tr);
             });
