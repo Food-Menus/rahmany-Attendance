@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي جهاز البصمة - أونلاين</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin: 20px auto; border-top: 6px solid #e74c3c; }
+        h2 { text-align: center; color: #c0392b; margin-top: 0; }
+        .network-config { background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        label { font-size: 13px; font-weight: bold; color: #555; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 90%; }
+        button { background-color: #e74c3c; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; transition: background 0.2s; }
+        button:hover { background-color: #c0392b; }
+        .terminal { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 6px; font-family: monospace; max-height: 200px; overflow-y: auto; font-size: 13px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📟 جهاز البصمة (إرسال سحابي ☁️)</h2>
+    <p style="text-align: center; color: #666; font-size: 14px;">اضغط من هاتفك لإرسال البصمات إلى السيرفر المشترك.</p>
+    
+    <div class="network-config">
+        <strong>🌐 إعدادات عنوان الجهاز الحالية:</strong>
+        <div class="grid">
+            <div>
+                <label>عنوان الـ IP الافتراضي</label>
+                <input type="text" id="devIp" value="192.168.1.150">
+            </div>
+            <div>
+                <label>رقم المنفذ (Port)</label>
+                <input type="number" id="devPort" value="4370">
+            </div>
+        </div>
+    </div>
+
+    <button id="sendBtn">🟢 تسجيل وإرسال بصمة عشوائية أونلاين</button>
+
+    <div style="font-weight: bold; margin-top: 15px; color: #555;">🖥️ شاشة مراقبة الإرسال:</div>
+    <div class="terminal" id="terminalLogs">
+        [تنبيه] الجهاز جاهز لبث البيانات عبر السيرفر أونلاين...
+    </div>
+</div>
+
+<script>
+    const employees = [
+        { id: 101, name: "محمد حسين" },
+        { id: 102, name: "أحمد علي" },
+        { id: 103, name: "سارة محمود" },
+        { id: 104, name: "مصطفى كريم" },
+        { id: 105, name: "فاطمة عمر" }
+    ];
+
+    document.getElementById('sendBtn').addEventListener('click', function() {
+        const ip = document.getElementById('devIp').value.trim();
+        const port = document.getElementById('devPort').value.trim();
+        const terminal = document.getElementById('terminalLogs');
+
+        const randomEmp = employees[Math.floor(Math.random() * employees.length)];
+        const status = Math.random() > 0.3 ? "حضور" : "انصراف";
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ar-EG') + ' ' + now.toLocaleDateString('ar-EG');
+
+        const logEntry = {
+            id: randomEmp.id,
+            name: randomEmp.name,
+            time: timeStr,
+            status: status,
+            targetIp: ip,
+            targetPort: port
+        };
+
+        // إرسال البيانات مباشرة لقاعدة بيانات Firebase عامة مجهزة للتجربة الحية
+        fetch('https://fingerprint-demo-default-rtdb.firebaseio.com/logs.json', {
+            method: 'POST',
+            body: JSON.stringify(logEntry),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const logLine = document.createElement('div');
+            logLine.innerHTML = `<span style="color:#fff;">[${now.toLocaleTimeString()}]</span> تم رفع حركة (${randomEmp.name}) بنجاح للعنوان ${ip}:${port}`;
+            terminal.appendChild(logLine);
+            terminal.scrollTop = terminal.scrollHeight;
+        })
+        .catch(err => {
+            alert("فشل الاتصال بالسيرفر، تأكد من وجود إنترنت في الهاتف.");
+        });
+    });
+</script>
+
+</body>
+</html>
