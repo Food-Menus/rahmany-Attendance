@@ -1,553 +1,128 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قهوة فتحة خير</title>
-    <link rel="icon" href="./photo/logo.png" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Aref+Ruqaa:wght@700&display=swap" rel="stylesheet">
-    <!-- مكتبة الأيقونات لتشغيل رموز الأركان الجديدة -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>برنامج إدارة الحضور والانصراف</title>
     <style>
-        :root {
-            /* ألوان دافئة مستوحاة من القهوة البلدي والخشب والنحاس */
-            --primary-gold: #ffcc00; /* نحاسي دافئ كلاسيكي */
-            --bright-gold: #ffd000;  /* نحاسي داكن متناسق */
-            --brand-brown: #3d2516;  /* بني بلون البن المحوج */
-            --light-brown: #5c3a21;  /* بني خشبي دافئ */
-            --deep-black: #1a110b;   /* أسود دافئ بلمحة بنية للخلفية */
-            --card-bg: #2b1a10;      /* خلفية الكروت */
-            
-            /* برواز شبه مخفي وهادئ جداً بدون تشتيت */
-            --led-bright-gold: rgba(198, 147, 75, 0.2);
-            --led-glow-gold: rgba(198, 147, 75, 0.05);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--deep-black);
-            color: #f5f0eb;
-            height: 100vh;
-            overflow: hidden;
-            padding: 6px; /* تقليل المسافة لأن البرواز أصبح مخفي تقريباً */
-        }
-
-        /* الحاوية الرئيسية: متوافقة تماماً مع شاشات الكمبيوتر الكبيرة */
-        .page-wrapper {
-            display: grid;
-            grid-template-columns: 450px 1fr;
-            height: calc(100vh - 12px);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            
-            /* إطار ناعم وبسيط جداً بدون أنيميشن فاقع */
-            border: 1px solid rgb(255, 221, 0);
-            box-shadow: 0 0 10px var(--led-glow-gold);
-        }
-
-        /* الجانب الأيمن: الهوية (ثابت للشاشات الكبيرة) بروح تراثية مع أنيميشن حركة الخلفية يمين ويسار بدون تكرار أو مط */
-        .sidebar-brand {
-            background: linear-gradient(rgba(26, 17, 11, 0.9), rgba(61, 37, 22, 0.542)), 
-                        url('./photo/Gemini_Generated_Image_mffzo8mffzo8mffz.png');
-            background-size: 140% 100%; /* حجم متناسق للكمبيوتر يسمح بالحركة الأفقية */
-            background-repeat: no-repeat;
-            background-position: 0% center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 50px;
-            border-left: 2px solid rgba(198, 147, 75, 0.3);
-            position: relative;
-            z-index: 5;
-            animation: moveBackgroundDesktop 25s ease-in-out infinite alternate;
-        }
-
-        /* أنيميشن حركة الخلفية على الكمبيوتر (يمين وشمال) */
-        @keyframes moveBackgroundDesktop {
-            0% { background-position: 0% center; }
-            100% { background-position: 100% center; }
-        }
-
-        /* برواز داخلي هادئ جداً */
-        .sidebar-brand::after {
-            content: "";
-            position: absolute;
-            top: 20px; bottom: 20px; left: 20px; right: 20px;
-            border: 1px solid rgba(198, 147, 75, 0.15);
-            border-radius: 8px;
-            pointer-events: none;
-        }
-
-        .sidebar-brand h1 {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 4.5rem;
-            color: var(--primary-gold);
-            line-height: 1.2;
-            margin-bottom: 20px;
-            text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.7);
-        }
-
-        .sidebar-brand p {
-            font-size: 1.25rem;
-            color: #dcd1c4;
-            line-height: 1.8;
-            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
-        }
-
-        /* الجانب الأيسر التفاعلي بألوان دافئة ومريحة للعين */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            background: #23160e; /* خلفية ثابتة ومريحة بروح المقاهي التراثية */
-            overflow: hidden;
-        }
-
-        /* الشريط العلوي */
-        .top-header-bar {
-            background: rgba(35, 22, 14, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 18px 40px;
-            border-bottom: 1px solid rgba(198, 147, 75, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 4;
-            width: 100%;
-        }
-
-        .welcome-ticker {
-            font-size: 1.05rem;
-            color: #e8ded1;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .welcome-ticker::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--primary-gold);
-            border-radius: 50%;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 15px;
-            font-size: 1.2rem;
-        }
-
-        .social-icons a {
-            color: #bfae9c;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .social-icons a:hover {
-            color: var(--primary-gold);
-        }
-
-        .contact-btn {
-            background: linear-gradient(135deg, var(--primary-gold), var(--bright-gold));
-            color: #1a110b;
-            padding: 10px 24px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s, background 0.3s;
-        }
-
-        .contact-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        /* منطقة المحتوى */
-        .scrollable-content {
-            padding: 40px 60px;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: #f5f0eb;
-            border-bottom: 2px solid var(--primary-gold);
-            display: inline-block;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-        }
-
-        /* شبكة الكروت */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-
-        .service-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(198, 147, 75, 0.15);
-            aspect-ratio: 20 / 15; 
-            max-height: 340px; 
-            border-radius: 8px;
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 50px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-            transition: all 0.4s ease;
-            cursor: pointer;
-        }
-
-        .card-bg-img {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            z-index: 1;
-            transition: transform 0.8s ease;
-        }
-
-        .card-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, rgba(26, 17, 11, 0.95) 50%, rgba(61, 37, 22, 0.4));
-            z-index: 2;
-            transition: background 0.4s;
-        }
-
-        .card-info-text {
-            position: relative;
-            z-index: 3;
-            max-width: 65%;
-        }
-
-        .card-icon {
-            font-size: 4rem;
-            position: relative;
-            z-index: 3;
-            transition: transform 0.4s ease;
-            filter: drop-shadow(2px 4px 10px rgba(0,0,0,0.5));
-        }
-
-        .service-card:hover {
-            transform: translateX(-6px);
-            border-color: var(--primary-gold);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7); 
-        }
-
-        .service-card:hover .card-bg-img {
-            transform: scale(1.05);
-        }
-
-        .service-card:hover .card-icon {
-            transform: scale(1.15);
-        }
-
-        .service-card::before {
-            content: "";
-            position: absolute;
-            top: 0; bottom: 0; right: 0; width: 4px;
-            background: var(--primary-gold);
-            transform: scaleY(0);
-            transition: 0.3s ease;
-            z-index: 4;
-        }
-
-        .service-card:hover::before { transform: scaleY(1); }
-
-        .service-card h3 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-            color: var(--primary-gold);
-            text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
-        }
-
-        .service-card p {
-            color: #dcd1c4;
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-
-        /* --- منيو المشروبات والاجتماعي المنسدل المطور رأسيًا --- */
-        .menu-expand {
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-            padding: 5px;
-        }
-
-        .sub-option {
-            opacity: 0;
-            transform: translateY(15px);
-            background: rgba(26, 17, 11, 0.65);
-            color: #f5f0eb;
-            padding: 18px 25px;
-            border-radius: 8px;
-            text-align: right;
-            font-weight: bold;
-            font-size: 1.15rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(198, 147, 75, 0.15);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-decoration: none;
-        }
-
-        .menu-show .sub-option {
-            animation: fadeInUpCustom 0.5s forwards ease-out;
-        }
-
-        .sub-option:nth-child(1) { animation-delay: 0.1s; }
-        .sub-option:nth-child(2) { animation-delay: 0.25s; }
-        .sub-option:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes fadeInUpCustom {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .hot-corner { color: #ff6b6b; border-right: 4px solid #ff4747; }
-        .hot-corner:hover { background: rgba(255, 71, 71, 0.08); border-color: #ff6b6b; transform: translateX(-5px); box-shadow: 0 4px 15px rgba(255, 107, 107, 0.25); }
-
-        .cold-corner { color: #4dadf7; border-right: 4px solid #228be6; }
-        .cold-corner:hover { background: rgba(34, 139, 230, 0.08); border-color: #4dadf7; transform: translateX(-5px); box-shadow: 0 4px 15px rgba(77, 173, 247, 0.25); }
-
-        .smoke-corner { color: #ced4da; border-right: 4px solid #868e96; }
-        .smoke-corner:hover { background: rgba(134, 142, 150, 0.12); border-color: #f1f3f5; transform: translateX(-5px); box-shadow: 0 4px 15px rgba(206, 212, 218, 0.25); }
-
-        .location-option { color: var(--primary-gold); border-right: 4px solid var(--primary-gold); }
-        .location-option:hover { background: rgba(255, 204, 0, 0.08); border-color: var(--bright-gold); transform: translateX(-5px); box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2); }
-
-        .contact-option { color: #a8e6cf; border-right: 4px solid #10b981; }
-        .contact-option:hover { background: rgba(16, 185, 129, 0.08); border-color: #34d399; transform: translateX(-5px); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
-       
-        footer {
-            padding: 5px;
-            text-align: center;
-            color: #bfae9c;
-            border-top: 1px solid rgba(255, 204, 0, 0.15);
-            font-size: 0.85rem;
-            margin-top: auto;
-            background: rgba(26, 17, 11, 0.6);
-            z-index: 1;
-        }
-
-        /* ========================================================
-           التجاوب الكامل للموبايل والأجهزة اللوحية (Responsive)
-           ======================================================== */
-        @media (max-width: 1000px) {
-            body { 
-                padding: 4px; 
-                overflow-y: auto; /* تفعيل التمرير الكامل على الهواتف */
-                height: auto;
-            }
-            .page-wrapper { 
-                grid-template-columns: 1fr; 
-                height: auto; 
-                min-height: calc(100vh - 8px); 
-                border-radius: 8px; 
-            }
-            
-            /* تعديل السايدبار في الموبايل لمنع المط وتشغيل الأنيميشن بشكل سليم رايح جاي */
-            .sidebar-brand { 
-                height: 42vh; 
-                padding: 30px; 
-                border-left: none; 
-                border-bottom: 2px solid rgba(198, 147, 75, 0.3); 
-                
-                /* الحفاظ على أبعاد الصورة الأصلية وحمايتها من المط */
-                background-size: cover; 
-                background-repeat: no-repeat;
-                background-position: center center;
-                
-                /* تفعيل أنيميشن مخصص وناعم للموبايل (يروح ويجي أفقي بنسب مرنة) */
-                animation: moveBackgroundMobile 20s ease-in-out infinite alternate;
-            }
-
-            @keyframes moveBackgroundMobile {
-                0% { background-position: 20% center; }
-                100% { background-position: 80% center; }
-            }
-
-            .sidebar-brand h1 { font-size: 3.2rem; }
-            .main-content { overflow: visible; height: auto; }
-            .scrollable-content { padding: 25px; overflow-y: visible; height: auto; }
-            .top-header-bar { padding: 15px 20px;width: 99%; flex-direction: column; gap: 15px; text-align: center; }
-            .header-actions { flex-direction: column; gap: 10px; width: 100%; }
-            .contact-btn { width: 100%; text-align: center; }
-            .service-card { aspect-ratio: auto; height: 180px; padding: 0 25px; border-radius: 6px; }
-            .card-info-text { max-width: 80%; }
-            .card-icon { font-size: 3rem; }
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 850px; margin: 0 auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 6px solid #2c3e50; }
+        h2 { margin-top: 0; color: #2c3e50; }
+        .search-box { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: flex-end; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #666; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { background-color: #27ae60; color: white; border: none; padding: 11px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; transition: background 0.2s; }
+        button:hover { background-color: #219653; }
+        .status-bar { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 14px; display: none; }
+        .status-loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #333; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-in { background-color: #e3f2fd; color: #0d47a1; }
+        .badge-out { background-color: #ffebee; color: #b71c1c; }
+        .empty-row { text-align: center; color: #999; padding: 30px; }
     </style>
 </head>
-
 <body>
 
-    <div class="page-wrapper">
-        <!-- الجانب الأيمن: الهوية الثابتة -->
-        <aside class="sidebar-brand">
-            <h1>قهوة<br>فتحة خير</h1>
-            <p>مرحباً بك في وش السعد واللمة الحلوة.. <br> كل فنجان قهوة عندنا هو بداية لقصة نجاح و"فتحة خير" عليك.</p>
-        </aside>
-
-        <!-- الجانب الأيسر التفاعلي -->
-        <main class="main-content">
-            
-            <!-- الشريط العلوي -->
-            <header class="top-header-bar">
-                <div class="welcome-ticker">
-                    <span> منورنا دايماً يا غالي في قهوة فتحة خير!</span>
-                </div>
-                <div class="header-actions">
-                    <div class="social-icons">
-                        <a>☕</a>
-                        <a>🍵</a>
-                        <a>🍸</a>
-                        <a>🍷</a>
-                        <a>🍺</a>
-                        <a>🍹</a>
-                        <a>🧋</a>
-                    </div>
-                    <a href="contact.html" class="contact-btn">  تواصل معنا   </a>
-                </div>
-            </header>
-
-            <!-- منطقة المحتوى -->
-            <div class="scrollable-content">
-                <section>
-                    <h2 class="section-title">تحب إيه ؟</h2>
-                    <div class="feature-grid">
-                        
-                        <!-- كارت المنيو -->
-                        <div>
-                            <a href="javascript:void(0)" class="service-card" onclick="toggleMenu('drinkMenu')">
-                                <div class="card-bg-img" style="background-image: url('https://images.unsplash.com/photo-1507133750040-4a8f57021571?q=80&w=800&auto=format&fit=crop');"></div>
-                                <div class="card-overlay"></div>
-                                
-                                <div class="card-info-text">
-                                    <h3>قائمة المشروبات </h3>
-                                    <p>أجود توليفات البن والمشروبات المنعشة المعمولة خصيصاً ليك.</p>
-                                </div>
-                                <span class="card-icon">☕</span>
-                            </a>
-                            
-                            <!-- الأركان الثلاثة بالأنيميشن المتتالي والألوان المميزة -->
-                            <div class="menu-expand" id="drinkMenu">
-                                <div class="sub-option hot-corner" onclick="location.href='menu2.html'">
-                                    <i class="fas fa-mug-hot"></i> ☕ ركن السخـن وفناجين الخير
-                                </div>
-                                <div class="sub-option cold-corner" onclick="location.href='menu1.html'">
-                                    <i class="fas fa-glass-martini-alt"></i> 🍹 ركن الساقع والنعنعة
-                                </div>
-                                <div class="sub-option smoke-corner" onclick="location.href='menu3.html'">
-                                    <i class="fas fa-smog"></i> 💨 ركن الدخان والمزاج العالي
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- كارت صور القهوة والمكان -->
-                        <a href="gallery.html" class="service-card">
-                            <div class="card-bg-img" style="background-image: url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=800&auto=format&fit=crop');"></div>
-                            <div class="card-overlay"></div>
-                            
-                            <div class="card-info-text">
-                                <h3>إتفرج علي القعدة</h3>
-                                <p>شاهد تفاصيل المكان و الجو العام واللمة التي ترد الروح.</p>
-                            </div>
-                            <span class="card-icon">📸</span>
-                        </a>
-
-                        <!-- كارت التواصل والشبكات الاجتماعية المطور المنسدل -->
-                        <div>
-                            <a href="javascript:void(0)" class="service-card" onclick="toggleMenu('socialMenu')">
-                                <div class="card-bg-img" style="background-image: url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop');"></div>
-                                <div class="card-overlay"></div>
-                                
-                                <div class="card-info-text">
-                                    <h3>دليلك لـ فتحة خير</h3>
-                                    <p>شاركنا لحظاتك الجميلة داخل المكان ونورنا علي القهوه.</p>
-                                </div>
-                                <span class="card-icon">📱</span>
-                            </a>
-
-                            <!-- قائمة خيارات الموقع والتواصل المنسدلة الجديدة -->
-                            <div class="menu-expand" id="socialMenu">
-                                <a href="location.html" class="sub-option location-option">
-                                    <i class="fas fa-map-marked-alt"></i> 📍 معرفة اللوكيشن  
-                                </a>
-                                <a href="contact.html" class="sub-option contact-option">
-                                    <i class="fas fa-phone-alt"></i> 📞 تواصل معنا واتصل بنا
-                                </a>
-                            </div>
-                        </div>
-
-                    </div>
-                </section>
-
-                <section style="margin-top: 10px;">
-                    <h2 class="section-title">ليه "فتحة خير"؟</h2>
-                    <p style="color: #c4b5a3; line-height: 2; font-size: 1.1rem;">
-                        لأننا لا نقدم مجرد مشروب، نحن نصنع لك طاقة إيجابية تبدأ بها يومك. من أول فنجان قهوة مضبوط على الريحة وحتى قعدات المساء والسمر، كل تفصيلة في المكان معمولة علشان تبتسم وتتفائل بالخير.
-                    </p>
-                </section>
+<div class="container">
+    <!-- كارت الاتصال بالشبكة -->
+    <div class="card">
+        <h2>🖥️ نظام Attendance Management (لوحة التحكم)</h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">قم بالاتصال بجهاز البصمة في الشبكة المحلية لسحب حركات الموظفين اليومية.</p>
+        
+        <div class="search-box">
+            <div class="input-group">
+                <label>أدخل عنوان الـ IP للجهاز المُراد سحبه</label>
+                <input type="text" id="searchIp" value="192.168.1.150">
             </div>
-            
-            <footer>
-                ® Copyright © 2026 Techno Science 
-            </footer>
-        </main>
+            <div class="input-group">
+                <label>رقم المنفذ (Port)</label>
+                <input type="number" id="searchPort" value="4370">
+            </div>
+            <button id="fetchBtn">اتصال وسحب البيانات اليومية</button>
+        </div>
+
+        <div id="statusBar" class="status-bar"></div>
     </div>
 
-    <script>
-        function toggleMenu(menuId) {
-            const menu = document.getElementById(menuId);
-            if (menu.style.display === 'flex') {
-                menu.style.display = 'none';
-                menu.classList.remove('menu-show');
-            } else {
-                menu.style.display = 'flex';
-                setTimeout(() => {
-                    menu.classList.add('menu-show');
-                }, 10);
-            }
+    <!-- كارت عرض جدول البيانات -->
+    <div class="card">
+        <h3 style="margin-top: 0; color: #34495e;">📊 سجل حركات الحضور والانصراف المسحوبة</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>كود الموظف ID</th>
+                    <th>اسم الموظف</th>
+                    <th>وقت تسجيل البصمة</th>
+                    <th>نوع الحركة</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="4" class="empty-row">لا توجد بيانات حالياً، فضلاً أدخل الإعدادات واضغط على سحب البيانات.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('fetchBtn').addEventListener('click', function() {
+        const ip = document.getElementById('searchIp').value.trim();
+        const port = document.getElementById('searchPort').value.trim();
+        const statusBar = document.getElementById('statusBar');
+        const tableBody = document.getElementById('tableBody');
+
+        if(!ip || !port) {
+            alert("يرجى إدخال البيانات كاملة!");
+            return;
         }
-    </script>
+
+        // 1. تشغيل حالة التحميل (محاكاة الاتصال الفعلي بالـ Socket)
+        statusBar.style.display = "block";
+        statusBar.className = "status-bar status-loading";
+        statusBar.innerText = `جاري محاولة فتح اتصال مع ${ip}:${port} والتحقق من الاستجابة...`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات ومطابقتها...</td></tr>`;
+
+        setTimeout(() => {
+            // 2. جلب البيانات من الذاكرة المشتركة وفلترتها بناءً على الـ IP والبورت المكتوبين
+            const allLogs = JSON.parse(localStorage.getItem('network_logs')) || [];
+            const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
+
+            if(filteredLogs.length === 0) {
+                statusBar.className = "status-bar status-loading";
+                statusBar.innerText = `تم الاتصال بنجاح بـ ${ip}:${port}، ولكن لم يتم العثور على أي حركات بصمة مسجلة لهذا العنوان اليوم.`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جهاز البصمة لا يحتوي على سجلات جديدة متوافقة مع هذا العنوان.</td></tr>`;
+                return;
+            }
+
+            // 3. عرض البيانات بنجاح في حالة التطابق
+            statusBar.className = "status-bar status-success";
+            statusBar.innerText = `تم الاتصال بنجاح! تم العثور وسحب عدد (${filteredLogs.length}) حركة بصمة من الجهاز.`;
+            
+            tableBody.innerHTML = ""; // تنظيف الجدول
+            
+            filteredLogs.reverse().forEach(log => {
+                const tr = document.createElement('tr');
+                const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
+                
+                tr.innerHTML = `
+                    <td><strong>#${log.id}</strong></td>
+                    <td>${log.name}</td>
+                    <td>${log.time}</td>
+                    <td><span class="${badgeClass}">${log.status}</span></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+        }, 1200); // تأخير ثانية وربع لمحاكاة سرعة الشبكة
+    });
+</script>
 
 </body>
 </html>
