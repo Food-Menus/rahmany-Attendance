@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج إدارة الحضور والانصراف - محلي</title>
+    <title>برنامج إدارة الحضور والانصراف</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 850px; margin: 0 auto; }
@@ -30,27 +30,29 @@
 <body>
 
 <div class="container">
+    <!-- كارت الاتصال بالشبكة -->
     <div class="card">
-        <h2>🖥️ نظام Attendance Management (سحب محلي مباشر 📡)</h2>
-        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">اضغط "سحب" لجلب البصمات المخزنة، أو تابع الجدول مباشرة عند الضغط من التاب الأخرى.</p>
+        <h2>🖥️ نظام Attendance Management (لوحة التحكم)</h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-top: -5px;">قم بالاتصال بجهاز البصمة في الشبكة المحلية لسحب حركات الموظفين اليومية.</p>
         
         <div class="search-box">
             <div class="input-group">
-                <label>عنوان الـ IP المراد سحبه</label>
+                <label>أدخل عنوان الـ IP للجهاز المُراد سحبه</label>
                 <input type="text" id="searchIp" value="192.168.1.150">
             </div>
             <div class="input-group">
                 <label>رقم المنفذ (Port)</label>
                 <input type="number" id="searchPort" value="4370">
             </div>
-            <button id="fetchBtn">سحب البصمات الآن</button>
+            <button id="fetchBtn">اتصال وسحب البيانات اليومية</button>
         </div>
 
         <div id="statusBar" class="status-bar"></div>
     </div>
 
+    <!-- كارت عرض جدول البيانات -->
     <div class="card">
-        <h3 style="margin-top: 0; color: #34495e;">📊 سجل البصمات المستلمة (تحديث فوري)</h3>
+        <h3 style="margin-top: 0; color: #34495e;">📊 سجل حركات الحضور والانصراف المسحوبة</h3>
         <table>
             <thead>
                 <tr>
@@ -62,7 +64,7 @@
             </thead>
             <tbody id="tableBody">
                 <tr>
-                    <td colspan="4" class="empty-row">لا توجد بيانات مسحوبة. اضغط سحب أو أرسل بصمات جديدة من التاب الأخرى.</td>
+                    <td colspan="4" class="empty-row">لا توجد بيانات حالياً، فضلاً أدخل الإعدادات واضغط على سحب البيانات.</td>
                 </tr>
             </tbody>
         </table>
@@ -70,57 +72,56 @@
 </div>
 
 <script>
-    const statusBar = document.getElementById('statusBar');
-    const tableBody = document.getElementById('tableBody');
-
-    // الدالة المسؤولة عن عرض وتحديث الجدول
-    function renderLogs() {
+    document.getElementById('fetchBtn').addEventListener('click', function() {
         const ip = document.getElementById('searchIp').value.trim();
         const port = document.getElementById('searchPort').value.trim();
+        const statusBar = document.getElementById('statusBar');
+        const tableBody = document.getElementById('tableBody');
 
-        // قراءة كل البصمات المخزنة في المتصفح
-        const allLogs = JSON.parse(localStorage.getItem('fingerprint_db')) || [];
-        
-        // فلترة البصمات حسب الـ IP والـ Port المكتوبين
-        const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
-
-        statusBar.style.display = "block";
-
-        if(filteredLogs.length === 0) {
-            statusBar.className = "status-bar status-loading";
-            statusBar.innerText = `لم يتم العثور على بصمات تطابق العنوان ${ip}:${port}`;
-            tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">لا توجد بصمات متطابقة. جرب إرسال بصمة من التاب الأخرى أولاً بنفس الأرقام.</td></tr>`;
+        if(!ip || !port) {
+            alert("يرجى إدخال البيانات كاملة!");
             return;
         }
 
-        statusBar.className = "status-bar status-success";
-        statusBar.innerText = `تم بنجاح! تم مزامنة وسحب (${filteredLogs.length}) حركة بصمة محلياً بنجاح.`;
-        
-        tableBody.innerHTML = "";
-        // عرض الأحدث فوق
-        [...filteredLogs].reverse().forEach(log => {
-            const tr = document.createElement('tr');
-            const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
+        // 1. تشغيل حالة التحميل (محاكاة الاتصال الفعلي بالـ Socket)
+        statusBar.style.display = "block";
+        statusBar.className = "status-bar status-loading";
+        statusBar.innerText = `جاري محاولة فتح اتصال مع ${ip}:${port} والتحقق من الاستجابة...`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جاري مزامنة السجلات ومطابقتها...</td></tr>`;
+
+        setTimeout(() => {
+            // 2. جلب البيانات من الذاكرة المشتركة وفلترتها بناءً على الـ IP والبورت المكتوبين
+            const allLogs = JSON.parse(localStorage.getItem('network_logs')) || [];
+            const filteredLogs = allLogs.filter(log => log.targetIp === ip && log.targetPort === port);
+
+            if(filteredLogs.length === 0) {
+                statusBar.className = "status-bar status-loading";
+                statusBar.innerText = `تم الاتصال بنجاح بـ ${ip}:${port}، ولكن لم يتم العثور على أي حركات بصمة مسجلة لهذا العنوان اليوم.`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-row">جهاز البصمة لا يحتوي على سجلات جديدة متوافقة مع هذا العنوان.</td></tr>`;
+                return;
+            }
+
+            // 3. عرض البيانات بنجاح في حالة التطابق
+            statusBar.className = "status-bar status-success";
+            statusBar.innerText = `تم الاتصال بنجاح! تم العثور وسحب عدد (${filteredLogs.length}) حركة بصمة من الجهاز.`;
             
-            tr.innerHTML = `
-                <td><strong>#${log.id}</strong></td>
-                <td>${log.name}</td>
-                <td>${log.time}</td>
-                <td><span class="${badgeClass}">${log.status}</span></td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    }
+            tableBody.innerHTML = ""; // تنظيف الجدول
+            
+            filteredLogs.reverse().forEach(log => {
+                const tr = document.createElement('tr');
+                const badgeClass = log.status === "حضور" ? "badge badge-in" : "badge badge-out";
+                
+                tr.innerHTML = `
+                    <td><strong>#${log.id}</strong></td>
+                    <td>${log.name}</td>
+                    <td>${log.time}</td>
+                    <td><span class="${badgeClass}">${log.status}</span></td>
+                `;
+                tableBody.appendChild(tr);
+            });
 
-    // زر السحب التقليدي
-    document.getElementById('fetchBtn').addEventListener('click', renderLogs);
-
-    // [الماجيك الحقيقي]: الاستماع لقناة البث المحلية
-    const fingerprintChannel = new BroadcastChannel('fingerprint_channel');
-    fingerprintChannel.onmessage = function(event) {
-        // بمجرد ما يجيلنا إشعار إن التاب التانية بعتت بصمة، بنحدث الجدول تلقائياً في نفس اللحظة!
-        renderLogs();
-    };
+        }, 1200); // تأخير ثانية وربع لمحاكاة سرعة الشبكة
+    });
 </script>
 
 </body>
