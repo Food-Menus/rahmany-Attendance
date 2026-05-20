@@ -1,78 +1,72 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقرير حركات البصمة</title>
+    <title>شاشة مراقبة بصمات أجهزة ZK</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f7f6; }
-        h1 { color: #333; }
-        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
-        button:hover { background-color: #218838; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background-color: #007bff; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
+        body { font-family: Tahoma, sans-serif; margin: 30px; background-color: #f4f6f9; color: #333; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status { padding: 8px; font-weight: bold; display: inline-block; margin-bottom: 15px; border-radius: 4px; }
+        .connected { background-color: #2ecc71; color: white; }
+        .disconnected { background-color: #e74c3c; color: white; }
     </style>
 </head>
 <body>
 
-    <h1>تقرير حضور وانصراف الموظفين</h1>
-    <button onclick="fetchAttendance()">سحب البيانات الآن</button>
+    <h2>مراقبة حزم الحضور الثنائية (Port 4370) مباشرة</h2>
+    <div id="status" class="status disconnected">جاري الاتصال بالسيرفر...</div>
 
-    <table id="attendanceTable">
+    <table>
         <thead>
             <tr>
                 <th>رقم الموظف (User ID)</th>
-                <th>وقت وتاريخ البصمة (Date & Time)</th>
+                <th>وقت البصمة (Timestamp)</th>
+                <th>عنوان الجهاز المتصل (IP)</th>
+                <th>بورت الجهاز</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- البيانات هتنزل هنا بالـ JS -->
+        <tbody id="log-table">
+            <!-- سيتم إضافة البيانات هنا ديناميكياً -->
         </tbody>
     </table>
 
     <script>
-        async function fetchAttendance() {
-            const tbody = document.querySelector('#attendanceTable tbody');
-            tbody.innerHTML = '<tr><td colspan="2">جاري سحب البيانات من الجهاز...</td></tr>';
+        const statusDiv = document.getElementById('status');
+        const tableBody = document.getElementById('log-table');
 
-            try {
-                const response = await fetch('http://localhost:5000/api/attendance');
-                const result = await response.json();
+        // الاتصال بخادم الـ WebSocket
+        const ws = new WebSocket('ws://localhost:8080');
 
-                // 🛠️ سطر استكشافي: افتح الـ Console في المتصفح (F12) عشان تشوف الداتا الحقيقية اللي راجعة
-                console.log("البيانات القادمة من الباك أند:", result);
+        ws.onopen = () => {
+            statusDiv.textContent = 'متصل بالسيرفر ونظام الـ UDP يعمل';
+            statusDiv.className = 'status connected';
+        };
 
-                if (result.success && result.data && result.data.length > 0) {
-                    tbody.innerHTML = ''; 
-                    
-                    result.data.forEach(log => {
-                        // 🛠️ معالجة ذكية لأسماء الحقول (تأخذ أي اسم ترجعه المكتبة)
-                        const userId = log.deviceUserId || log.userId || log.uid || "غير معروف";
-                        const rawTime = log.recordTime || log.timestamp || log.time;
-                        
-                        let formattedTime = "بدون تاريخ";
-                        if (rawTime) {
-                            formattedTime = new Date(rawTime).toLocaleString('ar-EG');
-                        }
+        ws.onclose = () => {
+            statusDiv.textContent = 'انقطع الاتصال بالسيرفر';
+            statusDiv.className = 'status disconnected';
+        };
 
-                        const row = `
-                            <tr>
-                                <td>${userId}</td>
-                                <td>${formattedTime}</td>
-                            </tr>
-                        `;
-                        tbody.insertAdjacentHTML('beforeend', row);
-                    });
-                } else {
-                    // لو المصفوفة رجعت فاضية من الباك أند
-                    tbody.innerHTML = `<tr><td colspan="2" style="color:orange;">⚠️ الاتصال ناجح، ولكن المحاكي أرسل سجلات فارغة أو بصيغة غير مدعومة.</td></tr>`;
-                }
-            } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="2" style="color:red;">مشكلة في الاتصال بالخادم (Backend)</td></tr>';
-            }
-        }
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            // إنشاء سطر جديد في الجدول
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${data.userId}</strong></td>
+                <td>${data.timestamp}</td>
+                <td>${data.ip}</td>
+                <td>${data.port}</td>
+            `;
+            
+            // إضافة السطر في أول الجدول ليظهر الأحدث دائماً في الأعلى
+            tableBody.insertBefore(row, tableBody.firstChild);
+        };
     </script>
 </body>
 </html>
