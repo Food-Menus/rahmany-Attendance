@@ -14,25 +14,36 @@
         .connected { background-color: #2ecc71; color: white; }
         .disconnected { background-color: #e74c3c; color: white; }
         
-        /* إعدادات صندوق الاتصال */
-        .config-box { background: #fff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
-        .config-box input { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 200px; text-align: left; direction: ltr; }
-        .config-box button { padding: 8px 15px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        /* إعدادات صندوق الاتصال المرن */
+        .config-box { background: #fff; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .input-group { display: flex; align-items: center; gap: 8px; }
+        .config-box input { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; text-align: left; direction: ltr; }
+        #server-ip { width: 180px; }
+        #server-port { width: 80px; }
+        .config-box button { padding: 8px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .config-box button:hover { background-color: #2980b9; }
     </style>
 </head>
 <body>
 
-    <h2>مراقبة حزم الحضور الثنائية (Port 4370) مباشرة</h2>
+    <h2>مراقبة حزم الحضور الثنائية مباشرة</h2>
     
-    <!-- صندوق إدخال الـ IP لتسهيل الاتصال من الهاتف -->
+    <!-- صندوق الإعدادات لتحديد الـ IP والبورت -->
     <div class="config-box">
-        <label for="server-ip">عنوان IP جهاز الكمبيوتر (السيرفر):</label>
-        <input type="text" id="server-ip" value="192.168.1.15" placeholder="مثال: 192.168.1.15">
-        <button onclick="connectToServer()">اتصـال</button>
+        <div class="input-group">
+            <label for="server-ip">عنوان الـ IP:</label>
+            <input type="text" id="server-ip" value="192.168.1.15" placeholder="مثال: 192.168.1.15">
+        </div>
+        
+        <div class="input-group">
+            <label for="server-port">البورت (Port):</label>
+            <input type="text" id="server-port" value="8080" placeholder="8080">
+        </div>
+        
+        <button onclick="connectToServer()">اتصـال مباكـشر</button>
     </div>
 
-    <div id="status" class="status disconnected">غير متصل. أدخل IP السيرفر واضغط اتصال.</div>
+    <div id="status" class="status disconnected">غير متصل. حدد البيانات واضغط اتصال.</div>
 
     <table>
         <thead>
@@ -44,7 +55,7 @@
             </tr>
         </thead>
         <tbody id="log-table">
-            <!-- سيتم إضافة البيانات هنا ديناميكياً -->
+            <!-- البيانات تتدفق هنا -->
         </tbody>
     </table>
 
@@ -52,24 +63,31 @@
         const statusDiv = document.getElementById('status');
         const tableBody = document.getElementById('log-table');
         const ipInput = document.getElementById('server-ip');
+        const portInput = document.getElementById('server-port');
         let ws = null;
 
-        // محاولة جلب آخر IP تم استخدامه لتوفير الوقت
-        if (localStorage.getItem('savedPrivateKeyIp')) {
-            ipInput.value = localStorage.getItem('savedPrivateKeyIp');
+        // استرجاع الإعدادات المحفوظة سابقاً إن وجدت
+        if (localStorage.getItem('zk_saved_ip')) {
+            ipInput.value = localStorage.getItem('zk_saved_ip');
+        }
+        if (localStorage.getItem('zk_saved_port')) {
+            portInput.value = localStorage.getItem('zk_saved_port');
         }
 
         function connectToServer() {
             const ip = ipInput.value.trim();
-            if (!ip) {
-                alert('الرجاء إدخال عنوان IP صحيح');
+            const port = portInput.value.trim();
+            
+            if (!ip || !port) {
+                alert('الرجاء إدخال الـ IP والبورت بشكل صحيح');
                 return;
             }
 
-            // حفظ الـ IP في المتصفح لكي لا تكتبه في كل مرة تفتح الهاتف
-            localStorage.setItem('savedPrivateKeyIp', ip);
+            // حفظ البيانات محلياً في المتصفح لتسهيل المرات القادمة
+            localStorage.setItem('zk_saved_ip', ip);
+            localStorage.setItem('zk_saved_port', port);
 
-            // إغلاق أي اتصال قديم لو وجد
+            // إنهاء الاتصال النشط حالياً قبل بدء اتصال جديد
             if (ws) {
                 ws.close();
             }
@@ -77,29 +95,28 @@
             statusDiv.textContent = 'جاري الاتصال بالسيرفر...';
             statusDiv.className = 'status disconnected';
 
-            // الاتصال بالسيرفر عبر الـ IP المدخل وبورت الـ WebSocket 8080
-            ws = new WebSocket(`ws://${ip}:8080`);
+            // إنشاء اتصال الـ WebSocket الديناميكي بالكامل
+            ws = new WebSocket(`ws://${ip}:${port}`);
 
             ws.onopen = () => {
-                statusDiv.textContent = `متصل بنجاح بالسيرفر (${ip}) وظيفة الـ UDP تعمل`;
+                statusDiv.textContent = `متصل بنجاح بالخادم عبر الرابط الأساسي ws://${ip}:${port}`;
                 statusDiv.className = 'status connected';
             };
 
             ws.onclose = () => {
-                statusDiv.textContent = 'انقطع الاتصال بالسيرفر. تأكد من تشغيل server.js ومن الـ IP';
+                statusDiv.textContent = 'انقطع الاتصال. تأكد من تشغيل ملف Node.js ومن صحة الـ IP والبورت المكتوبين';
                 statusDiv.className = 'status disconnected';
             };
 
             ws.onerror = (error) => {
                 console.error('WebSocket Error:', error);
-                statusDiv.textContent = 'فشل الاتصال. تأكد أن الهاتف والكمبيوتر على نفس الشبكة، وأن الفايروال يسمح بالبورت 8080';
+                statusDiv.textContent = 'فشل الاتصال. تحقق من جدار الحماية (Firewall) في الكمبيوتر أو إعدادات الشبكة';
                 statusDiv.className = 'status disconnected';
             };
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 
-                // إنشاء سطر جديد في الجدول
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>${data.userId}</strong></td>
@@ -108,12 +125,11 @@
                     <td>${data.port}</td>
                 `;
                 
-                // إضافة السطر في أول الجدول ليظهر الأحدث دائماً في الأعلى
                 tableBody.insertBefore(row, tableBody.firstChild);
             };
         }
 
-        // تشغيل الاتصال تلقائياً عند فتح الصفحة بناءً على الـ IP الموجود في الصندوق
+        // بدء محاولة الاتصال التلقائي فور تحميل الصفحة بالإعدادات الافتراضية/المحفوظة
         window.onload = () => {
             connectToServer();
         };
